@@ -131,7 +131,7 @@ ideal codebase/
 
 ---
 
-## ✅ Phase 3: Templates & Styling (PARTIALLY COMPLETED)
+## ✅ Phase 3: Templates & Styling (COMPLETED)
 
 ### Frontend ✅
 - [x] **2 CV Templates implemented**:
@@ -141,6 +141,7 @@ ideal codebase/
 - [x] Live preview with real-time updates
 - [x] Responsive HTML/CSS templates (Tailwind)
 - [x] Template stored in database per CV
+- [x] **Template switching in edit mode** - Change template dropdown on right side
 
 ### Backend ✅
 - [x] Template field in CV model
@@ -150,6 +151,26 @@ ideal codebase/
 - [ ] Template customization (colors, fonts)
 - [ ] More template options (3+ templates)
 - [ ] Template marketplace
+
+---
+
+## ✅ Phase 3.5: CV Editing (COMPLETED)
+
+### Frontend ✅
+- [x] **CV Edit Page** (`/cv/[id]`)
+  - [x] Fetch existing CV data
+  - [x] Pre-populate form fields
+  - [x] AI Assistant integration (same as create page)
+  - [x] **AI prompt appending with timestamps**
+  - [x] Template switching via dropdown ("Change Template" button)
+  - [x] Real-time preview updates
+  - [x] Update CV in database
+  - [x] Redirect to dashboard after update
+
+### Backend ✅
+- [x] PUT /api/cv/{id} endpoint
+- [x] Ownership verification
+- [x] AI prompt history preservation
 
 ---
 
@@ -171,7 +192,6 @@ ideal codebase/
 ## 🚧 Phase 5: Advanced Features (NOT STARTED)
 
 ### Planned Features
-- [ ] **CV Editing**: Edit existing CVs (currently only create/delete)
 - [ ] **CV Scoring System**: ATS-friendly analysis and scoring
 - [ ] **Job Prediction**: Match CVs with job postings
 - [ ] **LinkedIn Integration**: Import profile data
@@ -189,20 +209,22 @@ ideal codebase/
 ## 🎯 Current Status
 
 **Last Updated:** January 29, 2026  
-**Current Phase:** Phase 3 - Basic CV creation completed ✅  
+**Current Phase:** Phase 330, 2026  
+**Current Phase:** Phase 3.5 - CV editing completed ✅  
 **Working Features:**
 - ✅ User authentication (register, login, protected routes)
-- ✅ AI-powered CV content generation
+- ✅ AI-powered CV content generation (Azure OpenAI GPT-4o)
 - ✅ Create CVs with 2 templates
-- ✅ Dashboard with CV list
-- ✅ Delete CVs
-- ✅ Real-time preview
+- ✅ **Edit existing CVs** with AI assistant
+- ✅ **Template switching** in edit mode
+- ✅ **AI prompt history** with timestamp appending
+- ✅ Dashboard with CV list (create, edit, delete)
+- ✅ Real-time preview in both create and edit modes
 
 **Next Priority:**
-1. **CV Editing** - Edit existing CVs from dashboard
-2. **PDF Export** - Download CVs as PDF
-3. **More Templates** - Add 3-5 additional designs
-
+1. **PDF Export** - Download CVs as PDF (WeasyPrint/pdfkit integration)
+2. **More Templates** - Add 3-5 additional professional designs
+3. **CV Scoring** - ATS-friendly analysis and keyword optimization
 ---
 
 ## 🚀 How to Run
@@ -278,10 +300,12 @@ ALLOWED_ORIGINS=http://localhost:3000
 - Lucide Icons
 
 ---
-
-## 📝 Known Issues
-- CV editing not yet implemented (can only create and delete)
-- Export PDF button is placeholder
+Export PDF button is placeholder (needs WeasyPrint/pdfkit integration)
+- AI prompt appending needs user testing (timestamp format implemented)
 - No error handling for AI API failures beyond retry
+- No user profile/settings page
+- Limited to 2 templates (Modern & Classic)
+- No CV version history
+- No undo/redo functionalityfailures beyond retry
 - Template selection can't be changed after initial selection
 - No user profile/settings page

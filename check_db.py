@@ -24,10 +24,15 @@ if any('cvs' in str(t) for t in tables):
     print(f"\nTotal CVs: {count}")
     
     if count > 0:
-        cursor.execute("SELECT id, title, full_name, created_at FROM cvs LIMIT 5")
+        cursor.execute("SELECT id, title, full_name, ai_prompt, created_at, updated_at FROM cvs ORDER BY id DESC LIMIT 5")
         cvs = cursor.fetchall()
-        print("\nRecent CVs:")
+        print("\nRecent CVs with AI prompts:")
         for cv in cvs:
-            print(f"  ID: {cv[0]}, Title: {cv[1]}, Name: {cv[2]}, Created: {cv[3]}")
+            print(f"\n  ID: {cv[0]}")
+            print(f"  Title: {cv[1]}")
+            print(f"  Name: {cv[2]}")
+            print(f"  AI Prompt: {cv[3][:100] if cv[3] else 'None'}...")
+            print(f"  Created: {cv[4]}")
+            print(f"  Updated: {cv[5]}")
 
 conn.close()
