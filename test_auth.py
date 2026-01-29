@@ -24,8 +24,7 @@ def test_register():
     data = {
         "email": "demo@cvbuilder.com",
         "username": "demouser",
-        "password": "DemoPassword123!",
-        "full_name": "Demo User"
+        "password": "DemoPassword123!"
     }
     response = requests.post(f"{BASE_URL}/api/auth/register", json=data)
     print(f"Status: {response.status_code}")

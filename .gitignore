@@ -40,8 +40,10 @@ ENV/
 cv_builder.db
 
 # Environment variables
+.env
 .env.local
 .env.production
+.env.development
 
 # Logs
 *.log
@@ -62,8 +64,35 @@ frontend/dist/
 frontend/build/
 frontend/.next/
 frontend/.nuxt/
+frontend/out/
+frontend/.vercel/
+frontend/.turbo/
+*.tsbuildinfo
+
+# Package Manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
 
 # Uploads
 uploads/
 media/
 static/uploads/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Vector Database
+*.faiss
+*.index
+vectordb/data/
+chroma_db/
+chromadb/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp

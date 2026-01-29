@@ -1,10 +1,11 @@
-# 📝 CV Builder Website
+# 📝 AI CV Builder
 
-A full-stack CV/Resume building website with authentication, template management, and export functionality.
+A full-stack AI-powered CV/Resume building website with authentication, AI content generation, and export functionality.
 
 ## 🚀 Project Status
 
-✅ **Phase 1 - Backend Authentication: COMPLETED**
+✅ **Phase 1 - Backend Authentication: COMPLETED**  
+✅ **Phase 2 - Frontend Application: COMPLETED**
 
 See [PROGRESS.md](PROGRESS.md) for the complete roadmap and status.
 
@@ -19,38 +20,70 @@ See [PROGRESS.md](PROGRESS.md) for the complete roadmap and status.
 - **Password**: Bcrypt hashing
 - **ORM**: SQLAlchemy
 
-### Frontend (Coming Soon)
-- React / Vue / Next.js (TBD)
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API
+- **HTTP Client**: Axios
+- **UI Components**: Custom components with Lucide icons
 
 ---
 
 ## 📦 Installation & Setup
 
 ### Prerequisites
-- Python 3.8+
-- pip
+- **Backend**: Python 3.8+, pip
+- **Frontend**: Node.js 18+, npm
 
-### 1. Clone & Navigate
+### Quick Start (Full Stack)
+
+**Option 1: Use the startup script (Windows)**
+```bash
+start_fullstack.bat
+```
+
+**Option 2: Manual setup**
+
+1. **Start Backend** (Terminal 1):
 ```bash
 cd "c:\Program Files\Project\ideal codebase"
+pip install -r requirements.txt
+python -m backend.main
 ```
+Backend will run at: **http://localhost:8000**
 
-### 2. Install Dependencies
+2. **Start Frontend** (Terminal 2):
+```bash
+cd "c:\Program Files\Project\ideal codebase\frontend"
+npm install
+npm run dev
+```
+Frontend will run at: **http://localhost:3000**
+
+### Individual Setup
+
+#### Backend Only
 ```bash
 pip install -r requirements.txt
-```
-
-### 3. Configure Environment
-The `.env` file is already set up with defaults. For production:
-- Update `SECRET_KEY` to a long, random string
-- Change `DATABASE_URL` if using PostgreSQL
-
-### 4. Run the Backend
-```bash
 python -m backend.main
 ```
 
-The API will start at: **http://localhost:8000**
+#### Frontend Only
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Configuration
+
+**Backend** (`.env` in root):
+- `SECRET_KEY` - JWT secret (update for production)
+- `DATABASE_URL` - Database connection string
+
+**Frontend** (`.env.local` in frontend/):
+- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000)
 
 ---
 
@@ -70,18 +103,35 @@ Visit http://localhost:8000/docs for interactive API documentation (Swagger UI).
 3. Use `/api/auth/login` to get your tokens
 4. Click "Authorize" and enter: `Bearer YOUR_ACCESS_TOKEN`
 5. Test protected endpoints like `/api/auth/me`
-
-See [backend/README.md](backend/README.md) for detailed testing examples.
-
----
-
-## 📚 API Documentation
-
-### Live Documentation
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-
-### Authentication Endpoints
+                    # FastAPI Backend
+│   ├── api/                   # API routes and schemas
+│   ├── database/              # Database config and connection
+│   ├── models/                # SQLAlchemy models
+│   ├── services/              # Business logic
+│   ├── utils/                 # Utilities (JWT, passwords)
+│   └── main.py                # FastAPI app entry
+├── frontend/                   # Next.js Frontend
+│   ├── src/
+│   │   ├── app/              # Next.js pages (App Router)
+│   │   │   ├── page.tsx     # Landing page
+│   │   │   ├── login/       # Login page
+│   │   │   ├── register/    # Registration page
+│   │   │   ├── dashboard/   # User dashboard
+│   │   │   └── cv/          # CV builder
+│   │   ├── components/       # React components
+│   │   │   ├── ui/          # Reusable UI components
+│   │   │   ├── auth/        # Auth components
+│   │   │   └── layout/      # Layout components
+│   │   ├── contexts/         # React contexts
+│   │   └── lib/             # API client & services
+│   ├── package.json
+│   └── README.md
+├── start_frontend.bat         # Frontend startup script
+├── start_fullstack.bat        # Start both servers
+├── PROGRESS.md                # Development progress tracker
+├── requirements.txt           # Python dependencies
+├── test_auth.py              # Authentication test script
+└── README.md     ation Endpoints
 
 | Endpoint | Method | Description | Auth Required |
 |----------|--------|-------------|---------------|
@@ -98,28 +148,41 @@ See [backend/README.md](backend/README.md) for detailed testing examples.
 ```
 .
 ├── backend/
-│   ├── api/              # API routes and schemas
-│   ├── database/         # Database config and connection
-│   ├── models/           # SQLAlchemy models
-│   ├── services/         # Business logic
-│   ├── utils/            # Utilities (JWT, passwords)
-│   └── main.py           # FastAPI app entry
-├── frontend/             # Frontend (Coming soon)
-├── PROGRESS.md           # Development progress tracker
-├── requirements.txt      # Python dependencies
-├── test_auth.py          # Authentication test script
-└── README.md            # This file
-```
-
----
-
-## ✅ Completed Features
-
-### Authentication System
+│   Backend
 - ✅ User registration with email validation
 - ✅ Secure password hashing (bcrypt)
 - ✅ JWT access & refresh tokens
 - ✅ Protected routes with authentication
+- ✅ Token refresh mechanism
+- ✅ User profile endpoint
+- ✅ Complete API documentation
+- ✅ Test suite
+
+### Frontend
+- ✅ Modern Next.js 14 application with TypeScript
+- ✅ Responsive UI with Tailwind CSS
+- ✅ User authentication (Login/Register)
+- ✅ Protected routes and auth context
+- ✅ Token management with auto-refresh
+- ✅ User dashboard
+- ✅ CV creation interface
+- ✅ AI prompt assistant UI
+- ✅ Professional landing page
+- ✅ Toast notifications
+- ✅ Reusable UI components
+
+---
+
+## 🚧 Coming Next
+
+See [PROGRESS.md](PROGRESS.md) for the complete roadmap.
+
+**Next Priority:**
+1. Backend CV data models and CRUD API
+2. AI integration for content generation
+3. CV template system
+4. PDF export functionality
+5. CV preview feature routes with authentication
 - ✅ Token refresh mechanism
 - ✅ User profile endpoint
 - ✅ Complete API documentation
