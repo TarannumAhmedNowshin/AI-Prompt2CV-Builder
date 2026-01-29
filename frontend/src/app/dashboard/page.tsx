@@ -1,44 +1,94 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Plus, FileText, Calendar, Edit, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface CV {
-  id: string;
+  id: number;
   title: string;
-  createdAt: string;
-  updatedAt: string;
+  template: string;
+  full_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [cvs, setCvs] = useState<CV[]>([
-    // Mock data for now
-    {
-      id: '1',
-      title: 'Software Engineer Resume',
-      createdAt: '2026-01-20',
-      updatedAt: '2026-01-25',
-    },
-  ]);
+  const [cvs, setCvs] = useState<CV[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCVs();
+  }, []);
+
+  const fetchCVs = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      if (!token) {
+        toast.error('Please login to view your CVs');
+        return;
+      }
+
+      const response = await fetch('http://localhost:8000/api/cv/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch CVs');
+      }
+
+      const data = await response.json();
+      setCvs(data);
+    } catch (error) {
+      console.error('Error fetching CVs:', error);
+      toast.error('Failed to load CVs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreateNew = () => {
     router.push('/cv/new');
   };
 
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: number) => {
     router.push(`/cv/${id}`);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this CV?')) {
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this CV?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      
+      const response = await fetch(`http://localhost:8000/api/cv/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete CV');
+      }
+
       setCvs(cvs.filter(cv => cv.id !== id));
+      toast.success('CV deleted successfully');
+    } catch (error) {
+      console.error('Error deleting CV:', error);
+      toast.error('Failed to delete CV');
     }
   };
 
@@ -65,7 +115,14 @@ export default function DashboardPage() {
         </div>
 
         {/* CV List */}
-        {cvs.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading your CVs...</p>
+            </div>
+          </Card>
+        ) : cvs.length === 0 ? (
           <Card>
             <div className="text-center py-12">
               <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -108,14 +165,20 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       {cv.title}
                     </h3>
+                    {cv.full_name && (
+                      <p className="text-sm text-gray-600 mb-2">{cv.full_name}</p>
+                    )}
+                    <div className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 mb-2">
+                      {cv.template}
+                    </div>
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2" />
-                        Created: {new Date(cv.createdAt).toLocaleDateString()}
+                        Created: {new Date(cv.created_at).toLocaleDateString()}
                       </div>
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-2" />
-                        Updated: {new Date(cv.updatedAt).toLocaleDateString()}
+                        Updated: {new Date(cv.updated_at).toLocaleDateString()}
                       </div>
                     </div>
                   </div>

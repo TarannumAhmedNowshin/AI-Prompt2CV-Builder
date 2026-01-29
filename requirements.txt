@@ -19,6 +19,9 @@ bcrypt==4.1.2
 # Security
 python-dotenv==1.0.0
 
+# AI/ML
+openai==1.54.0
+
 # CORS
 fastapi-cors==0.0.6
 
