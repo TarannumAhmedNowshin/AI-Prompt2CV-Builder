@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Card from '@/components/ui/Card';
 import ModernTemplate from '@/components/cv/ModernTemplate';
 import ClassicTemplate from '@/components/cv/ClassicTemplate';
-import { Save, Download, Sparkles, ArrowLeft } from 'lucide-react';
+import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat, convertLegacyCVData } from '@/components/cv/CVEditor';
+import { Save, Download, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type TemplateType = 'modern' | 'classic';
@@ -19,18 +18,7 @@ export default function EditCVPage() {
   const cvId = params?.id;
   
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
-  const [cvData, setCvData] = useState({
-    title: '',
-    fullName: '',
-    email: '',
-    phone: '',
-    location: '',
-    summary: '',
-    experience: '',
-    education: '',
-    skills: '',
-  });
-  const [aiPrompt, setAiPrompt] = useState('');
+  const [cvData, setCvData] = useState<CVEditorData>(createEmptyCVData());
   const [lastUsedPrompt, setLastUsedPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,7 +53,8 @@ export default function EditCVPage() {
 
       const data = await response.json();
       
-      setCvData({
+      // Convert legacy data to new format
+      const convertedData = convertLegacyCVData({
         title: data.title || '',
         fullName: data.full_name || '',
         email: data.email || '',
@@ -77,6 +66,7 @@ export default function EditCVPage() {
         skills: data.skills || '',
       });
       
+      setCvData(convertedData);
       setSelectedTemplate(data.template as TemplateType);
       setLastUsedPrompt(data.ai_prompt || '');
       
@@ -89,19 +79,7 @@ export default function EditCVPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setCvData({
-      ...cvData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) {
-      toast.error('Please enter a prompt');
-      return;
-    }
-
+  const handleAIGenerate = async (prompt: string) => {
     setIsGenerating(true);
     
     try {
@@ -119,7 +97,7 @@ export default function EditCVPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt: aiPrompt }),
+        body: JSON.stringify({ prompt }),
       });
 
       if (!response.ok) {
@@ -129,24 +107,64 @@ export default function EditCVPage() {
 
       const generatedData = await response.json();
       
+      // Update personal info and other fields
       setCvData(prev => ({
         ...prev,
-        fullName: generatedData.full_name || prev.fullName,
-        email: generatedData.email || prev.email,
-        phone: generatedData.phone || prev.phone,
-        location: generatedData.location || prev.location,
+        personalInfo: {
+          ...prev.personalInfo,
+          fullName: generatedData.full_name || prev.personalInfo.fullName,
+          email: generatedData.email || prev.personalInfo.email,
+          phone: generatedData.phone || prev.personalInfo.phone,
+          location: generatedData.location || prev.personalInfo.location,
+        },
         summary: generatedData.summary || prev.summary,
-        experience: generatedData.experience || prev.experience,
-        education: generatedData.education || prev.education,
-        skills: generatedData.skills || prev.skills,
+        // Parse experience if it's a string
+        experience: generatedData.experience 
+          ? (typeof generatedData.experience === 'string' 
+              ? generatedData.experience.split('\n').filter((e: string) => e.trim()).map((exp: string, idx: number) => ({
+                  id: `exp-${Date.now()}-${idx}`,
+                  jobTitle: exp.trim(),
+                  employer: '',
+                  startDate: '',
+                  endDate: '',
+                  location: '',
+                  description: '',
+                  isVisible: true,
+                }))
+              : prev.experience)
+          : prev.experience,
+        // Parse education if it's a string
+        education: generatedData.education 
+          ? (typeof generatedData.education === 'string' 
+              ? generatedData.education.split('\n').filter((e: string) => e.trim()).map((edu: string, idx: number) => ({
+                  id: `edu-${Date.now()}-${idx}`,
+                  school: edu.trim(),
+                  degree: '',
+                  field: '',
+                  startDate: '',
+                  endDate: '',
+                  location: '',
+                  description: '',
+                  isVisible: true,
+                }))
+              : prev.education)
+          : prev.education,
+        // Parse skills if it's a string
+        skills: generatedData.skills 
+          ? (typeof generatedData.skills === 'string' 
+              ? generatedData.skills.split(',').filter((s: string) => s.trim()).map((skill: string, idx: number) => ({
+                  id: `skill-${Date.now()}-${idx}`,
+                  name: skill.trim(),
+                }))
+              : prev.skills)
+          : prev.skills,
       }));
       
       toast.success('AI content generated successfully!');
       // Append to existing prompts with timestamp
       const timestamp = new Date().toLocaleString();
-      const newPromptEntry = `[${timestamp}] ${aiPrompt}`;
+      const newPromptEntry = `[${timestamp}] ${prompt}`;
       setLastUsedPrompt(prev => prev ? `${prev}\n\n${newPromptEntry}` : newPromptEntry);
-      setAiPrompt('');
     } catch (error) {
       console.error('Error generating content:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate content. Please try again.');
@@ -175,6 +193,8 @@ export default function EditCVPage() {
         toast.error('Please login to update CV');
         return;
       }
+
+      const legacyData = convertToLegacyFormat(cvData);
       
       const response = await fetch(`http://localhost:8000/api/cv/${cvId}`, {
         method: 'PUT',
@@ -183,16 +203,8 @@ export default function EditCVPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          title: cvData.title,
+          ...legacyData,
           template: selectedTemplate,
-          full_name: cvData.fullName,
-          email: cvData.email,
-          phone: cvData.phone,
-          location: cvData.location,
-          summary: cvData.summary,
-          experience: cvData.experience,
-          education: cvData.education,
-          skills: cvData.skills,
           ai_prompt: lastUsedPrompt || null,
         }),
       });
@@ -203,6 +215,7 @@ export default function EditCVPage() {
       }
       
       toast.success('CV updated successfully!');
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error updating CV:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to update CV');
@@ -216,12 +229,27 @@ export default function EditCVPage() {
     // Add PDF export logic here
   };
 
+  // Convert new data format to legacy format for template preview
+  const getPreviewData = () => {
+    const legacy = convertToLegacyFormat(cvData);
+    return {
+      fullName: legacy.full_name,
+      email: legacy.email,
+      phone: legacy.phone,
+      location: legacy.location,
+      summary: legacy.summary,
+      experience: legacy.experience,
+      education: legacy.education,
+      skills: legacy.skills,
+    };
+  };
+
   if (isLoading) {
     return (
       <ProtectedRoute>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading CV...</p>
           </div>
         </div>
@@ -231,7 +259,7 @@ export default function EditCVPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-100">
         {/* Top Bar */}
         <div className="bg-white shadow-sm border-b sticky top-0 z-10">
           <div className="max-w-[1800px] mx-auto px-6 py-4">
@@ -262,131 +290,18 @@ export default function EditCVPage() {
 
         {/* Split Screen Layout */}
         <div className="flex max-w-[1800px] mx-auto">
-          {/* Left Side - Form and AI Prompt */}
+          {/* Left Side - Form */}
           <div className="w-1/2 p-6">
-            <div className="space-y-6">
-              {/* AI Assistant Card */}
-              <Card title="AI Assistant" subtitle="Use AI to update content for your CV">
-                <div className="space-y-4">
-                  <textarea
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="Describe what you want to add or change..."
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                  />
-                  <Button
-                    onClick={handleAIGenerate}
-                    isLoading={isGenerating}
-                    fullWidth
-                  >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    Generate with AI
-                  </Button>
-                </div>
-              </Card>
-
-              {/* CV Form */}
-              <Card title="CV Details">
-                <div className="space-y-6">
-                  <Input
-                    label="CV Title"
-                    name="title"
-                    placeholder="e.g., Software Engineer Resume"
-                    value={cvData.title}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-                    <div className="space-y-4">
-                      <Input
-                        label="Full Name"
-                        name="fullName"
-                        placeholder="John Doe"
-                        value={cvData.fullName}
-                        onChange={handleChange}
-                      />
-                      <Input
-                        label="Email"
-                        name="email"
-                        type="email"
-                        placeholder="john@example.com"
-                        value={cvData.email}
-                        onChange={handleChange}
-                      />
-                      <Input
-                        label="Phone"
-                        name="phone"
-                        placeholder="+1 234 567 8900"
-                        value={cvData.phone}
-                        onChange={handleChange}
-                      />
-                      <Input
-                        label="Location"
-                        name="location"
-                        placeholder="New York, NY"
-                        value={cvData.location}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Professional Summary</h3>
-                    <textarea
-                      name="summary"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={4}
-                      placeholder="Brief summary of your professional background..."
-                      value={cvData.summary}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Experience</h3>
-                    <textarea
-                      name="experience"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={6}
-                      placeholder="List your work experience (one per line)..."
-                      value={cvData.experience}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Education</h3>
-                    <textarea
-                      name="education"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={4}
-                      placeholder="List your educational background (one per line)..."
-                      value={cvData.education}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Skills</h3>
-                    <textarea
-                      name="skills"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      rows={3}
-                      placeholder="List your skills (comma-separated)..."
-                      value={cvData.skills}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-              </Card>
-            </div>
+            <CVEditor
+              data={cvData}
+              onChange={setCvData}
+              onAIGenerate={handleAIGenerate}
+              isGenerating={isGenerating}
+            />
           </div>
 
           {/* Right Side - CV Preview */}
-          <div className="w-1/2 bg-gray-100 p-6">
+          <div className="w-1/2 bg-gray-200 p-6">
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -403,7 +318,7 @@ export default function EditCVPage() {
 
               {/* Template Selector */}
               {showTemplateSelector && (
-                <div className="mb-4 p-4 bg-white rounded-lg shadow-md border-2 border-blue-200">
+                <div className="mb-4 p-4 bg-white rounded-lg shadow-md border-2 border-pink-200">
                   <h3 className="font-semibold mb-3">Select Template</h3>
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -414,14 +329,14 @@ export default function EditCVPage() {
                       }}
                       className={`p-3 border-2 rounded-lg transition-all ${
                         selectedTemplate === 'modern'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-pink-600 bg-pink-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="aspect-[1/1.4] bg-gradient-to-br from-blue-600 to-blue-800 rounded mb-2"></div>
                       <p className="font-semibold text-center text-sm">Modern</p>
                       {selectedTemplate === 'modern' && (
-                        <p className="text-xs text-blue-600 mt-1">✓ Active</p>
+                        <p className="text-xs text-pink-600 mt-1">✓ Active</p>
                       )}
                     </button>
                     <button
@@ -432,14 +347,14 @@ export default function EditCVPage() {
                       }}
                       className={`p-3 border-2 rounded-lg transition-all ${
                         selectedTemplate === 'classic'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-pink-600 bg-pink-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
                       <div className="aspect-[1/1.4] bg-white border-2 border-gray-800 rounded mb-2"></div>
                       <p className="font-semibold text-center text-sm">Classic</p>
                       {selectedTemplate === 'classic' && (
-                        <p className="text-xs text-blue-600 mt-1">✓ Active</p>
+                        <p className="text-xs text-pink-600 mt-1">✓ Active</p>
                       )}
                     </button>
                   </div>
@@ -448,9 +363,9 @@ export default function EditCVPage() {
 
               <div className="w-full">
                 {selectedTemplate === 'modern' ? (
-                  <ModernTemplate data={cvData} />
+                  <ModernTemplate data={getPreviewData()} />
                 ) : (
-                  <ClassicTemplate data={cvData} />
+                  <ClassicTemplate data={getPreviewData()} />
                 )}
               </div>
             </div>

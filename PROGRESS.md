@@ -37,9 +37,18 @@ ideal codebase/
 │   │   │       └── new/         # CV creation page
 │   │   ├── components/
 │   │   │   ├── auth/            # Auth components
-│   │   │   ├── cv/              # CV templates
+│   │   │   ├── cv/              # CV templates & editor components
 │   │   │   │   ├── ModernTemplate.tsx
-│   │   │   │   └── ClassicTemplate.tsx
+│   │   │   │   ├── ClassicTemplate.tsx
+│   │   │   │   ├── CVEditor.tsx          # Main customizable editor
+│   │   │   │   ├── CVSection.tsx         # Base collapsible section
+│   │   │   │   ├── PersonalInfoSection.tsx
+│   │   │   │   ├── SummarySection.tsx
+│   │   │   │   ├── ExperienceSection.tsx
+│   │   │   │   ├── EducationSection.tsx
+│   │   │   │   ├── ProjectsSection.tsx
+│   │   │   │   ├── SkillsSection.tsx
+│   │   │   │   └── ResearchSection.tsx
 │   │   │   ├── layout/          # Layout components
 │   │   │   └── ui/              # Reusable UI components
 │   │   ├── contexts/
@@ -174,6 +183,60 @@ ideal codebase/
 
 ---
 
+## ✅ Phase 3.6: Advanced CV Customization (FlowCV-Inspired) (COMPLETED)
+
+### Frontend ✅
+- [x] **Highly Customizable CV Editor**:
+  - [x] **8 New Section Components**:
+    - [x] `CVSection.tsx` - Base collapsible accordion component with edit heading, add entry, visibility toggles
+    - [x] `PersonalInfoSection.tsx` - Personal info card with photo upload placeholder
+    - [x] `SummarySection.tsx` - Professional summary with rich text toolbar
+    - [x] `ExperienceSection.tsx` - Work experience with drag-drop, edit modals, rich text descriptions
+    - [x] `EducationSection.tsx` - Education entries with same advanced features
+    - [x] `ProjectsSection.tsx` - Project entries with links and technologies
+    - [x] `SkillsSection.tsx` - Skills as draggable tags with add/remove functionality
+    - [x] `ResearchSection.tsx` - Research and publications section
+  - [x] **CVEditor Component** (`CVEditor.tsx`) - Main editor combining all sections
+  - [x] **FlowCV-Style Features**:
+    - [x] Collapsible sections with expand/collapse
+    - [x] Drag and drop reordering for all entries
+    - [x] Individual entry editing via dedicated modals
+    - [x] Visibility toggles (show/hide entries on CV)
+    - [x] Edit section headings ("Edit Heading" button)
+    - [x] Add entry buttons for each section
+    - [x] Grip handles for drag-to-reorder
+    - [x] Photo upload placeholder in personal info
+    - [x] Rich text description areas with formatting toolbars
+    - [x] Link fields (company websites, project GitHub, LinkedIn, etc.)
+    - [x] Date range fields with validation
+    - [x] Tag-based skills management
+    - [x] GPA field for education
+    - [x] Technologies field for projects
+  - [x] **UI/UX Improvements**:
+    - [x] Clean beige/cream background (#FAF9F7)
+    - [x] Blue accent colors (replaced pink gradient)
+    - [x] Smooth transitions and hover effects
+    - [x] Fixed double-scrolling issue (single smooth scroll)
+    - [x] Professional modal designs
+    - [x] Responsive layout maintained
+  - [x] **Data Structure Enhancements**:
+    - [x] New `CVEditorData` interface with structured data
+    - [x] Helper functions: `createEmptyCVData()`, `convertLegacyCVData()`, `convertToLegacyFormat()`
+    - [x] Backward compatibility with existing CV database schema
+    - [x] Support for section title customization
+- [x] **Updated Pages**:
+  - [x] `/cv/new` - Integrated new CVEditor component
+  - [x] `/cv/[id]` - Integrated new CVEditor component with data loading
+
+### Design Philosophy
+- FlowCV-inspired customization while maintaining original aesthetics
+- Modular component architecture for easy extension
+- User-friendly interface with intuitive controls
+- Professional and clean visual design
+- Backward compatible with existing CV data
+
+---
+
 ## ⏳ Phase 4: Export & Sharing (NOT STARTED)
 
 ### Backend ❌
@@ -208,9 +271,8 @@ ideal codebase/
 
 ## 🎯 Current Status
 
-**Last Updated:** January 29, 2026  
-**Current Phase:** Phase 330, 2026  
-**Current Phase:** Phase 3.5 - CV editing completed ✅  
+**Last Updated:** January 30, 2026  
+**Current Phase:** Phase 3.6 - Advanced CV Customization completed ✅  
 **Working Features:**
 - ✅ User authentication (register, login, protected routes)
 - ✅ AI-powered CV content generation (Azure OpenAI GPT-4o)
@@ -220,11 +282,21 @@ ideal codebase/
 - ✅ **AI prompt history** with timestamp appending
 - ✅ Dashboard with CV list (create, edit, delete)
 - ✅ Real-time preview in both create and edit modes
+- ✅ **FlowCV-inspired customizable editor**:
+  - ✅ Collapsible sections with drag-drop reordering
+  - ✅ Individual entry editing with dedicated modals
+  - ✅ Visibility toggles for all entries
+  - ✅ Custom section headings
+  - ✅ Rich text descriptions
+  - ✅ Photo upload placeholder
+  - ✅ Tag-based skills management
+  - ✅ Professional blue accent theme
 
 **Next Priority:**
 1. **PDF Export** - Download CVs as PDF (WeasyPrint/pdfkit integration)
-2. **More Templates** - Add 3-5 additional professional designs
-3. **CV Scoring** - ATS-friendly analysis and keyword optimization
+2. **Template Updates** - Update Modern & Classic templates to support new data structure (visibility toggles, custom headings, rich text)
+3. **More Templates** - Add 3-5 additional professional designs
+4. **CV Scoring** - ATS-friendly analysis and keyword optimization
 ---
 
 ## 🚀 How to Run
@@ -300,12 +372,25 @@ ALLOWED_ORIGINS=http://localhost:3000
 - Lucide Icons
 
 ---
-Export PDF button is placeholder (needs WeasyPrint/pdfkit integration)
+## 📝 Known Issues & Limitations
+
+**Current Limitations:**
+- Export PDF button is placeholder (needs WeasyPrint/pdfkit integration)
+- Templates (Modern & Classic) need updates to fully support new data structure:
+  - Visibility toggles not yet reflected in templates
+  - Custom section headings not yet displayed
+  - Rich text formatting not yet rendered
 - AI prompt appending needs user testing (timestamp format implemented)
 - No error handling for AI API failures beyond retry
 - No user profile/settings page
 - Limited to 2 templates (Modern & Classic)
 - No CV version history
-- No undo/redo functionalityfailures beyond retry
-- Template selection can't be changed after initial selection
-- No user profile/settings page
+- No undo/redo functionality
+- Photo upload is placeholder only (no actual upload functionality)
+- Drag-drop visual feedback could be improved
+- No mobile responsiveness testing for new editor components
+
+**Technical Debt:**
+- Legacy CV data conversion functions may need optimization for large datasets
+- Consider implementing debouncing for real-time preview updates
+- Template components should be refactored to accept new structured data format
