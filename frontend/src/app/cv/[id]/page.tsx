@@ -262,18 +262,17 @@ export default function EditCVPage() {
     }
   };
 
-  // Convert new data format to legacy format for template preview
+  // Get preview data - pass structured data directly to templates
   const getPreviewData = () => {
-    const legacy = convertToLegacyFormat(cvData);
     return {
-      fullName: legacy.full_name,
-      email: legacy.email,
-      phone: legacy.phone,
-      location: legacy.location,
-      summary: legacy.summary,
-      experience: legacy.experience,
-      education: legacy.education,
-      skills: legacy.skills,
+      personalInfo: cvData.personalInfo,
+      summary: cvData.summary,
+      experience: cvData.experience,
+      education: cvData.education,
+      projects: cvData.projects,
+      research: cvData.research,
+      skills: cvData.skills,
+      sectionTitles: cvData.sectionTitles,
     };
   };
 

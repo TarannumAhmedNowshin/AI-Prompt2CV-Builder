@@ -143,14 +143,32 @@ ideal codebase/
 ## ✅ Phase 3: Templates & Styling (COMPLETED)
 
 ### Frontend ✅
-- [x] **2 CV Templates implemented**:
-  1. **Modern Template**: Blue gradient header, clean sections, skill tags
-  2. **Classic Template**: Traditional black/white, professional layout
+- [x] **2 CV Templates fully implemented and updated**:
+  1. **Modern Template** (Samuel Jensen style): 
+     - Blue header (#1e4d6b) with professional title
+     - Contact icons with email, phone, location, LinkedIn
+     - Section headers with blue underlines
+     - Support for Research Experience section (ideal for academics)
+     - Bullet point parsing for descriptions
+     - Visibility toggles respected
+     - Custom section titles supported
+  2. **Classic Template** (Jacob McLaren style):
+     - Traditional black/white professional layout
+     - Centered name header with contact info bar
+     - Uppercase section headers with underline
+     - Times New Roman serif font family
+     - Education before Work Experience ordering
+     - Bullet point formatting for all descriptions
 - [x] Template preview in selection screen
 - [x] Live preview with real-time updates
 - [x] Responsive HTML/CSS templates (Tailwind)
 - [x] Template stored in database per CV
 - [x] **Template switching in edit mode** - Change template dropdown on right side
+- [x] **Templates support new structured data format** (CVEditorData)
+- [x] **Backward compatibility with legacy data format**
+- [x] **Visibility toggles reflected in templates**
+- [x] **Custom section headings displayed**
+- [x] **Rich text/bullet point formatting rendered**
 
 ### Backend ✅
 - [x] Template field in CV model
@@ -294,9 +312,9 @@ ideal codebase/
 
 **Next Priority:**
 1. **PDF Export** - Download CVs as PDF (WeasyPrint/pdfkit integration)
-2. **Template Updates** - Update Modern & Classic templates to support new data structure (visibility toggles, custom headings, rich text)
-3. **More Templates** - Add 3-5 additional professional designs
-4. **CV Scoring** - ATS-friendly analysis and keyword optimization
+2. **More Templates** - Add 3-5 additional professional designs
+3. **CV Scoring** - ATS-friendly analysis and keyword optimization
+4. **Template Customization** - Allow color/font customization
 ---
 
 ## 🚀 How to Run
@@ -376,10 +394,6 @@ ALLOWED_ORIGINS=http://localhost:3000
 
 **Current Limitations:**
 - Export PDF button is placeholder (needs WeasyPrint/pdfkit integration)
-- Templates (Modern & Classic) need updates to fully support new data structure:
-  - Visibility toggles not yet reflected in templates
-  - Custom section headings not yet displayed
-  - Rich text formatting not yet rendered
 - AI prompt appending needs user testing (timestamp format implemented)
 - No error handling for AI API failures beyond retry
 - No user profile/settings page
@@ -393,4 +407,3 @@ ALLOWED_ORIGINS=http://localhost:3000
 **Technical Debt:**
 - Legacy CV data conversion functions may need optimization for large datasets
 - Consider implementing debouncing for real-time preview updates
-- Template components should be refactored to accept new structured data format
