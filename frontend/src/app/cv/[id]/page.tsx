@@ -9,6 +9,7 @@ import ClassicTemplate from '@/components/cv/ClassicTemplate';
 import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat, convertLegacyCVData } from '@/components/cv/CVEditor';
 import { Save, Download, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { exportToPDF, prepareCVForExport } from '@/lib/pdf-export';
 
 type TemplateType = 'modern' | 'classic';
 
@@ -224,9 +225,41 @@ export default function EditCVPage() {
     }
   };
 
-  const handleExport = () => {
-    toast.success('Exporting CV as PDF...');
-    // Add PDF export logic here
+  const handleExport = async () => {
+    if (!cvData.title) {
+      toast.error('Please enter a CV title before exporting');
+      return;
+    }
+
+    if (!selectedTemplate) {
+      toast.error('Please select a template before exporting');
+      return;
+    }
+
+    const loadingToast = toast.loading('Generating PDF...');
+
+    try {
+      // Prepare the element for export (remove scroll constraints)
+      const cleanup = prepareCVForExport('cv-preview');
+
+      // Wait a bit for any layout changes to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Generate the PDF
+      const filename = cvData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      await exportToPDF('cv-preview', filename);
+
+      // Cleanup
+      cleanup();
+
+      toast.success('PDF exported successfully!', { id: loadingToast });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to export PDF',
+        { id: loadingToast }
+      );
+    }
   };
 
   // Convert new data format to legacy format for template preview
@@ -361,7 +394,7 @@ export default function EditCVPage() {
                 </div>
               )}
 
-              <div className="w-full">
+              <div className="w-full" id="cv-preview">
                 {selectedTemplate === 'modern' ? (
                   <ModernTemplate data={getPreviewData()} />
                 ) : (

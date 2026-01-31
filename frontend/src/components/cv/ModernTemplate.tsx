@@ -19,7 +19,7 @@ export default function ModernTemplate({ data }: ModernTemplateProps) {
   const educationList = data.education ? data.education.split('\n').filter(e => e.trim()) : [];
 
   return (
-    <div className="bg-white shadow-xl rounded-lg overflow-hidden" style={{ width: '100%', maxWidth: '800px', minHeight: '1000px', margin: '0 auto' }}>
+    <div className="bg-white" style={{ width: '100%', maxWidth: '800px', minHeight: '1000px', margin: '0 auto' }}>
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-8">
         <h1 className="text-4xl font-bold mb-2">

@@ -19,8 +19,8 @@ export default function ClassicTemplate({ data }: ClassicTemplateProps) {
   const educationList = data.education ? data.education.split('\n').filter(e => e.trim()) : [];
 
   return (
-    <div className="bg-white shadow-xl rounded-lg overflow-hidden" style={{ width: '100%', maxWidth: '800px', minHeight: '1000px', margin: '0 auto' }}>
-      <div className="p-8">
+    <div className="bg-white" style={{ width: '100%', maxWidth: '800px', minHeight: '1000px', margin: '0 auto', padding: '2rem' }}>
+      <div>
         {/* Header Section */}
         <div className="text-center border-b-4 border-gray-800 pb-6 mb-6">
           <h1 className="text-4xl font-bold text-gray-900 mb-3">
