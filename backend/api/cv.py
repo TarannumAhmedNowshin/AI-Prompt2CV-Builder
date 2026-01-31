@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
@@ -8,14 +8,17 @@ from ..models.cv import CV
 from ..models.cv_version import CVVersion
 from ..utils.auth import get_current_user
 from ..services.ai_service import ai_service
+from ..services.document_parser import document_parser
 from .cv_schemas import (
     CVCreate, CVUpdate, CVResponse, 
     AIPromptRequest, AIGeneratedContent,
     JobSuggestionRequest, JobSuggestionResponse,
-    CVVersionListItem, CVVersionDetail, CVVersionCreate, CVVersionRestore
+    CVVersionListItem, CVVersionDetail, CVVersionCreate, CVVersionRestore,
+    DocumentParseResponse
 )
 
 router = APIRouter(prefix="/api/cv", tags=["CV"])
+
 
 
 def create_version_snapshot(db: Session, cv: CV, user_id: int, change_summary: str = None, version_name: str = None) -> CVVersion:
@@ -47,6 +50,49 @@ def create_version_snapshot(db: Session, cv: CV, user_id: int, change_summary: s
     )
     db.add(version)
     return version
+
+
+@router.post("/parse-document", response_model=DocumentParseResponse)
+async def parse_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Parse an uploaded document (PDF, DOCX, TXT) and extract CV information.
+    Returns structured data that can be used to populate CV fields.
+    """
+    # Validate file type
+    allowed_extensions = {'pdf', 'docx', 'doc', 'txt'}
+    file_ext = file.filename.lower().split('.')[-1] if file.filename else ''
+    
+    if file_ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type: {file_ext}. Allowed types: {', '.join(allowed_extensions)}"
+        )
+    
+    # Check file size (max 10MB)
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File too large. Maximum size is 10MB."
+        )
+    
+    try:
+        # Parse the document
+        parsed_data = document_parser.parse_document(content, file.filename)
+        return DocumentParseResponse(**parsed_data.to_dict())
+    except ImportError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Missing dependency: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to parse document: {str(e)}"
+        )
 
 
 @router.post("/generate-content", response_model=AIGeneratedContent)

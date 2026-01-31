@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Camera, Pencil, Link as LinkIcon } from 'lucide-react';
+import { Mail, Phone, MapPin, Camera, Pencil, Link as LinkIcon, Briefcase } from 'lucide-react';
 
 interface PersonalInfo {
   fullName: string;
@@ -11,6 +11,7 @@ interface PersonalInfo {
   photo?: string;
   linkedin?: string;
   website?: string;
+  professionalTitle?: string;
 }
 
 interface PersonalInfoSectionProps {
@@ -60,6 +61,11 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                 <h2 className="text-xl font-bold text-slate-900">
                   {data.fullName || 'Your Name'}
                 </h2>
+                {data.professionalTitle && (
+                  <p className="text-sm text-primary-600 font-medium mt-0.5">
+                    {data.professionalTitle}
+                  </p>
+                )}
                 <div className="mt-2 space-y-1.5">
                   {data.email && (
                     <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -119,6 +125,22 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   placeholder="John Doe"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Professional Title
+                </label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={editData.professionalTitle || ''}
+                    onChange={(e) => setEditData({ ...editData, professionalTitle: e.target.value })}
+                    placeholder="e.g., Product Manager, Software Engineer"
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
 
               <div>

@@ -149,3 +149,55 @@ class CVVersionRestore(BaseModel):
     restored_version: int
     new_version_created: int
 
+
+# ============ Document Parsing Schemas ============
+
+class ParsedEducationItem(BaseModel):
+    """Parsed education entry"""
+    institution: str = ""
+    degree: str = ""
+    field_of_study: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    gpa: str = ""
+    description: str = ""
+
+
+class ParsedExperienceItem(BaseModel):
+    """Parsed experience entry"""
+    job_title: str = ""
+    employer: str = ""
+    location: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    description: str = ""
+
+
+class ParsedProjectItem(BaseModel):
+    """Parsed project entry"""
+    title: str = ""
+    technologies: str = ""
+    description: str = ""
+    link: str = ""
+
+
+class ParsedSkillItem(BaseModel):
+    """Parsed skill entry"""
+    name: str = ""
+    category: str = "Other"
+
+
+class DocumentParseResponse(BaseModel):
+    """Response model for document parsing"""
+    full_name: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    linkedin: str = ""
+    website: str = ""
+    summary: str = ""
+    experience: list[ParsedExperienceItem] = []
+    education: list[ParsedEducationItem] = []
+    skills: list[ParsedSkillItem] = []
+    projects: list[ParsedProjectItem] = []
+    confidence_scores: dict[str, float] = {}

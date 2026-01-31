@@ -348,6 +348,66 @@ ideal codebase/
 
 ---
 
+## ✅ Phase 3.9: Document Import & Auto-Fill (COMPLETED)
+
+### Backend ✅
+- [x] **Document Parser Service** (`services/document_parser.py`):
+  - [x] Multi-format support: PDF, DOCX, TXT
+  - [x] Regex-based extraction (no LLM required)
+  - [x] Email pattern matching with validation
+  - [x] Phone number extraction (multiple formats)
+  - [x] Location detection (City, State, Country)
+  - [x] Skills matching against 150+ tech keywords
+  - [x] Skill categorization (Programming, Web, Database, Cloud, Data Science, Tools, Mobile, Testing)
+  - [x] Confidence scoring for extracted fields
+  - [x] Duplicate skill deduplication
+- [x] **API Endpoint** (`cv.py`):
+  - [x] POST /api/cv/parse-document - Parse uploaded documents
+  - [x] File validation (type and 10MB size limit)
+  - [x] Multipart form data handling
+  - [x] Error handling for corrupt files
+- [x] **Dependencies** (`requirements.txt`):
+  - [x] PyPDF2==3.0.1 - PDF text extraction
+  - [x] python-docx==1.1.0 - Word document parsing
+  - [x] pdfplumber==0.10.3 - Advanced PDF parsing
+- [x] **Schemas** (`cv_schemas.py`):
+  - [x] `DocumentParseResponse` - Structured parsed data
+  - [x] `ParsedSkillItem` - Skill with category
+  - [x] Confidence scores for field reliability
+
+### Frontend ✅
+- [x] **DocumentDropzone Component** (`DocumentDropzone.tsx`):
+  - [x] Drag-and-drop file upload UI
+  - [x] File type validation (PDF, DOCX, TXT)
+  - [x] Size limit enforcement (10MB)
+  - [x] Visual drag-over states
+  - [x] Upload progress indication
+  - [x] Error handling and user feedback
+- [x] **ParsedDataPreview Component** (`ParsedDataPreview.tsx`):
+  - [x] Modal preview of extracted data
+  - [x] Field-by-field review interface
+  - [x] Confidence indicators (High/Medium/Low)
+  - [x] Selectable skills with toggle controls
+  - [x] Apply/Cancel actions
+  - [x] Clean, professional design
+- [x] **Integration**:
+  - [x] Import button in CV edit page action bar (beside History & Export PDF)
+  - [x] Modal workflow for upload → preview → apply
+  - [x] Smart data merging (preserves existing data, avoids duplicates)
+  - [x] Skills deduplication and categorization
+  - [x] Auto-population of personal info fields
+
+### Features
+- **Multi-Format Support**: Parse PDF, DOCX, and TXT resumes
+- **Reliable Extraction**: Focus on high-confidence fields (contact info + skills)
+- **Smart Parsing**: Regex-based extraction without LLM overhead
+- **Skill Intelligence**: 150+ tech skills across 8 categories
+- **Confidence Scoring**: Visual indicators show extraction reliability
+- **Data Merging**: Intelligently combines imported data with existing CV
+- **Professional UI**: Seamless integration with existing action bar
+
+---
+
 ## ✅ Phase 4: Export & Sharing (PARTIALLY COMPLETED)
 
 ### Frontend ✅
@@ -431,6 +491,13 @@ ideal codebase/
   - ✅ Manual named version checkpoints
   - ✅ Version preview and restore functionality
   - ✅ Slide-in panel with professional UI
+- ✅ **Document Import & Auto-Fill**:
+  - ✅ Drag-and-drop upload for PDF, DOCX, TXT files
+  - ✅ Automatic extraction of contact info and skills
+  - ✅ Preview modal with confidence indicators
+  - ✅ Smart data merging with existing CV
+  - ✅ 150+ tech skills recognition across 8 categories
+  - ✅ Import button in action bar (beside History & Export PDF)
 - ✅ **PDF Export**:
   - ✅ Client-side PDF generation with proper A4 sizing
   - ✅ Full CV width captured (no cut-off issues)
@@ -509,6 +576,7 @@ ALLOWED_ORIGINS=http://localhost:3000
 - Azure OpenAI (AI content generation)
 - JWT (Authentication)
 - Pydantic (Data validation)
+- PyPDF2, python-docx, pdfplumber (Document parsing)
 
 **Frontend:**
 - Next.js 14 (React framework with App Router)
@@ -530,9 +598,10 @@ ALLOWED_ORIGINS=http://localhost:3000
 - Limited to 2 templates (Modern & Classic)
 - No undo/redo functionality
 - Photo upload is placeholder only (no actual upload functionality)
-- Drag-drop visual feedback could be improved
 - No mobile responsiveness testing for new editor components
 - No public CV sharing functionality
+- Document import focuses on reliable fields only (name, email, phone, location, skills)
+- No work experience/education extraction from documents (intentionally simplified)
 
 **Technical Debt:**
 - Legacy CV data conversion functions may need optimization for large datasets

@@ -8,9 +8,12 @@ import ModernTemplate from '@/components/cv/ModernTemplate';
 import ClassicTemplate from '@/components/cv/ClassicTemplate';
 import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat, convertLegacyCVData } from '@/components/cv/CVEditor';
 import VersionHistory from '@/components/cv/VersionHistory';
-import { Save, Download, ArrowLeft, History } from 'lucide-react';
+import DocumentDropzone, { ParsedCVData } from '@/components/cv/DocumentDropzone';
+import ParsedDataPreview from '@/components/cv/ParsedDataPreview';
+import { Save, Download, ArrowLeft, History, FileUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToPDF, prepareCVForExport } from '@/lib/pdf-export';
+import { Skill } from '@/components/cv/SkillsSection';
 
 type TemplateType = 'modern' | 'classic';
 
@@ -27,6 +30,9 @@ export default function EditCVPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedCVData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (cvId) {
@@ -266,6 +272,48 @@ export default function EditCVPage() {
     }
   };
 
+  const handleDocumentParsed = (data: ParsedCVData) => {
+    setParsedData(data);
+    setShowPreview(true);
+    setShowImportModal(false);
+  };
+
+  const handleApplyParsedData = (selectedData: ParsedCVData) => {
+    // Convert parsed skills to CV editor format
+    const newSkills: Skill[] = selectedData.skills.map((skill, idx) => ({
+      id: `imported-skill-${Date.now()}-${idx}`,
+      name: skill.name,
+    }));
+
+    // Merge with existing data - only personal info and skills
+    const updatedData: CVEditorData = {
+      ...cvData,
+      personalInfo: {
+        fullName: selectedData.full_name || cvData.personalInfo.fullName,
+        email: selectedData.email || cvData.personalInfo.email,
+        phone: selectedData.phone || cvData.personalInfo.phone,
+        location: selectedData.location || cvData.personalInfo.location,
+        linkedin: selectedData.linkedin || cvData.personalInfo.linkedin,
+        website: cvData.personalInfo.website,
+        photo: cvData.personalInfo.photo,
+      },
+      // Add new skills, avoiding duplicates
+      skills: [...cvData.skills, ...newSkills.filter(
+        ns => !cvData.skills.some(s => s.name.toLowerCase() === ns.name.toLowerCase())
+      )],
+    };
+
+    setCvData(updatedData);
+    setShowPreview(false);
+    setParsedData(null);
+    toast.success('Document data imported successfully!');
+  };
+
+  const handleCancelPreview = () => {
+    setShowPreview(false);
+    setParsedData(null);
+  };
+
   // Get preview data - pass structured data directly to templates
   const getPreviewData = () => {
     return {
@@ -318,6 +366,14 @@ export default function EditCVPage() {
                 >
                   <History className="h-4 w-4" />
                   <span>History</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowImportModal(true)}
+                  title="Import from document"
+                >
+                  <FileUp className="h-4 w-4" />
+                  <span>Import</span>
                 </Button>
                 <Button variant="outline" onClick={() => router.push('/dashboard')}>
                   Cancel
@@ -431,6 +487,37 @@ export default function EditCVPage() {
             fetchCV();
           }}
         />
+
+        {/* Import Document Modal */}
+        {showImportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">Import from Document</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">
+                Upload your existing resume to auto-fill contact info and skills
+              </p>
+              <DocumentDropzone onDataParsed={handleDocumentParsed} />
+            </div>
+          </div>
+        )}
+
+        {/* Parsed Data Preview Modal */}
+        {parsedData && (
+          <ParsedDataPreview
+            data={parsedData}
+            onApply={handleApplyParsedData}
+            onCancel={handleCancelPreview}
+            isOpen={showPreview}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

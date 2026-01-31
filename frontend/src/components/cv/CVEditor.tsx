@@ -25,6 +25,7 @@ export interface CVEditorData {
     photo?: string;
     linkedin?: string;
     website?: string;
+    professionalTitle?: string;
   };
   summary: string;
   experience: ExperienceEntry[];

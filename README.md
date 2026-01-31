@@ -110,6 +110,30 @@ Every save creates an automatic snapshot. Restore any previous version with one 
 
 Both templates parse the same data structure, so switching is instant.
 
+### Document Import & Auto-Fill
+```
+POST /api/cv/parse-document
+Body: multipart/form-data with file
+Returns: {
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "phone": "+1-555-0123",
+  "location": "San Francisco, CA",
+  "skills": [
+    {"name": "Python", "category": "Programming Languages"},
+    {"name": "React", "category": "Web Development"}
+  ],
+  "confidence_scores": {...}
+}
+```
+
+Drag and drop your existing resume (PDF, DOCX, or TXT) to automatically extract:
+- **Contact Information**: Name, email, phone, location
+- **Skills**: 150+ tech skills across 8 categories (Programming, Web, Database, Cloud, etc.)
+- **Confidence Scoring**: Visual indicators show extraction reliability
+
+No LLM required—pure regex and pattern matching for fast, reliable extraction.
+
 ---
 
 ## API Reference
@@ -131,6 +155,7 @@ Both templates parse the same data structure, so switching is instant.
 | PUT | `/api/cv/{id}` | Update CV |
 | DELETE | `/api/cv/{id}` | Delete CV |
 | POST | `/api/cv/generate-content` | AI content generation |
+| POST | `/api/cv/parse-document` | Parse uploaded resume (PDF/DOCX/TXT) |
 | POST | `/api/cv/{id}/job-suggestions` | Job match analysis |
 
 ### Versions
@@ -150,7 +175,7 @@ Full OpenAPI docs at `http://localhost:8000/docs`
 backend/
 ├── api/
 │   ├── auth.py          # JWT auth endpoints
-│   ├── cv.py            # CV CRUD + AI endpoints
+│   ├── cv.py            # CV CRUD + AI + parsing endpoints
 │   └── cv_schemas.py    # Pydantic models
 ├── models/
 │   ├── user.py          # User table
@@ -158,20 +183,23 @@ backend/
 │   └── cv_version.py    # Version snapshots
 ├── services/
 │   ├── auth_service.py  # Password hashing, user lookup
-│   └── ai_service.py    # Azure OpenAI wrapper
+│   ├── ai_service.py    # Azure OpenAI wrapper
+│   └── document_parser.py # Resume parsing (PDF/DOCX/TXT)
 └── main.py              # FastAPI app, CORS, routes
 
 frontend/src/
 ├── app/
 │   ├── dashboard/       # CV list, create/edit/delete
 │   ├── cv/new/          # Create flow
-│   └── cv/[id]/         # Edit flow
+│   └── cv/[id]/         # Edit flow (with Import button)
 ├── components/cv/
 │   ├── CVEditor.tsx     # Main editor with all sections
 │   ├── ModernTemplate.tsx
 │   ├── ClassicTemplate.tsx
 │   ├── JobSuggestions.tsx
-│   └── VersionHistory.tsx
+│   ├── VersionHistory.tsx
+│   ├── DocumentDropzone.tsx # Drag-and-drop file upload
+│   └── ParsedDataPreview.tsx # Preview extracted data
 ├── contexts/
 │   └── AuthContext.tsx  # JWT state, auto-refresh
 └── lib/
@@ -205,6 +233,7 @@ frontend/src/
 | FlowCV-style Editor | ✅ Done |
 | Job Matching | ✅ Done |
 | Version History | ✅ Done |
+| Document Import | ✅ Done |
 | PDF Export | 🚧 Next |
 | Public Sharing | 📋 Planned |
 
