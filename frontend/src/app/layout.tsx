@@ -8,7 +8,7 @@ import Layout from '@/components/layout/Layout'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI CV Builder - Create Professional Resumes',
+  title: 'AI Prompt2CV Builder - Create Professional Resumes',
   description: 'Build professional, ATS-friendly resumes with AI assistance. Create, edit, and export your CV in minutes.',
 }
 

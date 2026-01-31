@@ -99,7 +99,7 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
             <span className="font-medium">Job Description</span>
           </div>
           <textarea
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 text-slate-800 placeholder:text-slate-400"
             rows={5}
             placeholder="Paste the job description here... Include requirements, responsibilities, and qualifications for best results."
             value={jobDescription}
@@ -109,9 +109,9 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-xl border border-red-100">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
-            <span>{error}</span>
+            <span className="text-sm">{error}</span>
           </div>
         )}
 
@@ -120,63 +120,65 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
           onClick={handleGetSuggestions}
           isLoading={isLoading}
           fullWidth
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 shadow-lg"
         >
-          <Target className="h-5 w-5 mr-2" />
-          Suggest Me for This Position
+          <Target className="h-5 w-5" />
+          <span>Analyze Job Match</span>
         </Button>
 
         {/* Suggestions Display */}
         {suggestions && (
-          <div className="mt-6 space-y-4 border-t border-gray-200 pt-4">
+          <div className="mt-6 space-y-4 border-t border-slate-100 pt-5">
             {/* Match Score */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100">
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
+                <div className="p-2 bg-primary-100 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-primary-600" />
+                </div>
                 <div>
-                  <span className="font-semibold text-gray-800">Match Score</span>
-                  <p className="text-sm text-gray-500">{getScoreLabel(suggestions.match_score)}</p>
+                  <span className="font-semibold text-slate-800">Match Score</span>
+                  <p className="text-sm text-slate-500">{getScoreLabel(suggestions.match_score)}</p>
                 </div>
               </div>
-              <div className={`text-3xl font-bold px-4 py-2 rounded-lg ${getScoreColor(suggestions.match_score)}`}>
+              <div className={`text-3xl font-bold px-4 py-2 rounded-xl ${getScoreColor(suggestions.match_score)}`}>
                 {suggestions.match_score}%
               </div>
             </div>
 
             {/* Strengths */}
             {suggestions.strengths && (
-              <div className="p-4 bg-green-50 rounded-xl">
+              <div className="p-4 bg-emerald-50/80 rounded-xl border border-emerald-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold text-green-800">Your Strengths</span>
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <span className="font-semibold text-emerald-800">Your Strengths</span>
                 </div>
-                <p className="text-green-700">{suggestions.strengths}</p>
+                <p className="text-emerald-700 text-sm leading-relaxed">{suggestions.strengths}</p>
               </div>
             )}
 
             {/* Gaps */}
             {suggestions.gaps && (
-              <div className="p-4 bg-amber-50 rounded-xl">
+              <div className="p-4 bg-amber-50/80 rounded-xl border border-amber-100">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertCircle className="h-5 w-5 text-amber-600" />
                   <span className="font-semibold text-amber-800">Areas to Address</span>
                 </div>
-                <p className="text-amber-700">{suggestions.gaps}</p>
+                <p className="text-amber-700 text-sm leading-relaxed">{suggestions.gaps}</p>
               </div>
             )}
 
             {/* Skills to Highlight */}
             {suggestions.skills_to_highlight.length > 0 && (
-              <div className="p-4 bg-blue-50 rounded-xl">
+              <div className="p-4 bg-primary-50/80 rounded-xl border border-primary-100">
                 <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle className="h-5 w-5 text-blue-600" />
-                  <span className="font-semibold text-blue-800">Skills to Highlight</span>
+                  <CheckCircle className="h-5 w-5 text-primary-600" />
+                  <span className="font-semibold text-primary-800">Skills to Highlight</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {suggestions.skills_to_highlight.map((skill, idx) => (
                     <span 
                       key={idx} 
-                      className="px-3 py-1 bg-blue-200 text-blue-800 rounded-full text-sm font-medium"
+                      className="px-3 py-1.5 bg-primary-100 text-primary-700 rounded-full text-sm font-medium border border-primary-200/50"
                     >
                       {skill}
                     </span>
@@ -187,16 +189,16 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
 
             {/* Skills to Add */}
             {suggestions.skills_to_add.length > 0 && (
-              <div className="p-4 bg-purple-50 rounded-xl">
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb className="h-5 w-5 text-purple-600" />
-                  <span className="font-semibold text-purple-800">Skills to Consider Adding</span>
+                  <Lightbulb className="h-5 w-5 text-slate-600" />
+                  <span className="font-semibold text-slate-800">Skills to Consider Adding</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {suggestions.skills_to_add.map((skill, idx) => (
                     <span 
                       key={idx} 
-                      className="px-3 py-1 bg-purple-200 text-purple-800 rounded-full text-sm font-medium"
+                      className="px-3 py-1.5 bg-white text-slate-700 rounded-full text-sm font-medium border border-slate-200"
                     >
                       {skill}
                     </span>

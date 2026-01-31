@@ -117,7 +117,7 @@ export default function ClassicTemplate({ data }: ClassicTemplateProps) {
   const visibleResearch = research?.filter(r => r.isVisible !== false) || [];
 
   return (
-    <div className="bg-white shadow-lg" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px', margin: '0 auto', fontFamily: 'Times New Roman, serif', padding: '2.5rem' }}>
+    <div className="cv-print-optimized bg-white shadow-lg" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px', margin: '0 auto', fontFamily: 'Times New Roman, serif', padding: '2.5rem' }}>
       {/* Header Section - Classic Jacob McLaren style */}
       <div className="text-center mb-4 pb-2 border-b border-gray-400">
         <h1 className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Times New Roman, serif' }}>

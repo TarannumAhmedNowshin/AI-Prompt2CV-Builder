@@ -1,4 +1,4 @@
-# CV Builder - Backend Setup & Testing
+# AI Prompt2CV Builder - Backend Setup & Testing
 
 ## 🚀 Quick Start
 

@@ -1,4 +1,4 @@
-# AI-Powered CV Builder - Development Progress
+# AI Prompt2CV Builder - Development Progress
 
 ## Project Overview
 An AI-powered CV/Resume building platform with authentication, intelligent content generation, multiple templates, and real-time preview. Built with Next.js (frontend) and FastAPI (backend).
@@ -348,18 +348,34 @@ ideal codebase/
 
 ---
 
-## ⏳ Phase 4: Export & Sharing (NOT STARTED)
+## ✅ Phase 4: Export & Sharing (PARTIALLY COMPLETED)
+
+### Frontend ✅
+- [x] **PDF Export** (`pdf-export.ts`):
+  - [x] Export button functionality with loading states
+  - [x] HTML to Canvas conversion using html2canvas
+  - [x] A4-sized PDF generation with jsPDF
+  - [x] Captures actual CV template (not wrapper) for full-width export
+  - [x] Proper aspect ratio maintenance
+  - [x] Multi-page support for longer CVs
+  - [x] JPEG compression (92% quality) for smaller file sizes
+  - [x] Print-optimized CSS classes for proper text sizing
+  - [x] Style preparation function for consistent rendering
+  - [x] Toast notifications for export success/failure
+- [x] **Print Optimization** (`globals.css`):
+  - [x] `.cv-print-optimized` class with proper point sizes
+  - [x] Optimized font sizes for PDF rendering (10-24pt range)
+  - [x] Print media queries for color accuracy
 
 ### Backend ❌
-- [ ] PDF generation (WeasyPrint/ReportLab)
+- [ ] Server-side PDF generation (WeasyPrint/ReportLab)
 - [ ] Public CV sharing links
 - [ ] Export API endpoints
 
-### Frontend ❌
-- [ ] Export button functionality (currently placeholder)
-- [ ] PDF download
+### Not Implemented ❌
 - [ ] Share link generation
 - [ ] Public CV view page
+- [ ] Multiple export formats (DOCX, TXT)
 
 ---
 
@@ -385,8 +401,8 @@ ideal codebase/
 
 ## 🎯 Current Status
 
-**Last Updated:** January 31, 2026  
-**Current Phase:** Phase 3.8 - Version History (Google Docs Style) completed ✅  
+**Last Updated:** February 1, 2026  
+**Current Phase:** Phase 4 - Export & Sharing (PDF Export completed) ✅  
 **Working Features:**
 - ✅ User authentication (register, login, protected routes)
 - ✅ AI-powered CV content generation (Azure OpenAI GPT-4o)
@@ -415,12 +431,19 @@ ideal codebase/
   - ✅ Manual named version checkpoints
   - ✅ Version preview and restore functionality
   - ✅ Slide-in panel with professional UI
+- ✅ **PDF Export**:
+  - ✅ Client-side PDF generation with proper A4 sizing
+  - ✅ Full CV width captured (no cut-off issues)
+  - ✅ Print-optimized text sizing (10-24pt range)
+  - ✅ Multi-page support for longer CVs
+  - ✅ High-quality JPEG compression
+  - ✅ Matches screen preview appearance
 
 **Next Priority:**
-1. **PDF Export** - Download CVs as PDF (WeasyPrint/pdfkit integration)
-2. **More Templates** - Add 3-5 additional professional designs
-3. **CV Scoring** - ATS-friendly analysis and keyword optimization
-4. **Template Customization** - Allow color/font customization
+1. **More Templates** - Add 3-5 additional professional designs
+2. **CV Scoring** - ATS-friendly analysis and keyword optimization
+3. **Template Customization** - Allow color/font customization
+4. **Public CV Sharing** - Generate shareable links
 ---
 
 ## 🚀 How to Run
@@ -499,17 +522,19 @@ ALLOWED_ORIGINS=http://localhost:3000
 ## 📝 Known Issues & Limitations
 
 **Current Limitations:**
-- Export PDF button is placeholder (needs WeasyPrint/pdfkit integration)
+- PDF export is client-side only (no server-side generation)
+- No multiple export formats (DOCX, TXT)
 - AI prompt appending needs user testing (timestamp format implemented)
 - No error handling for AI API failures beyond retry
 - No user profile/settings page
 - Limited to 2 templates (Modern & Classic)
-- No CV version history
 - No undo/redo functionality
 - Photo upload is placeholder only (no actual upload functionality)
 - Drag-drop visual feedback could be improved
 - No mobile responsiveness testing for new editor components
+- No public CV sharing functionality
 
 **Technical Debt:**
 - Legacy CV data conversion functions may need optimization for large datasets
 - Consider implementing debouncing for real-time preview updates
+- PDF generation relies on browser rendering (consider server-side alternative for consistency)

@@ -117,7 +117,7 @@ export default function ModernTemplate({ data }: ModernTemplateProps) {
   const visibleResearch = research?.filter(r => r.isVisible !== false) || [];
 
   return (
-    <div className="bg-white shadow-lg" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px', margin: '0 auto', fontFamily: 'Georgia, serif' }}>
+    <div className="cv-print-optimized bg-white shadow-lg" style={{ width: '100%', maxWidth: '850px', minHeight: '1100px', margin: '0 auto', fontFamily: 'Georgia, serif' }}>
       {/* Header Section - Blue themed like Samuel Jensen CV */}
       <div className="bg-[#1e4d6b] text-white px-8 py-6">
         {/* Name and Title */}

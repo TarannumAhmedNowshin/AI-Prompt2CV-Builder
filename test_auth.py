@@ -73,7 +73,7 @@ def test_logout(access_token):
 
 def run_all_tests():
     print("\n" + "🧪 " * 20)
-    print("    CV BUILDER - Authentication Test Suite")
+    print("    AI PROMPT2CV BUILDER - Authentication Test Suite")
     print("🧪 " * 20)
     
     try:

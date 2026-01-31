@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from ..database import Base
 
 
@@ -27,10 +27,12 @@ class CVVersion(Base):
     experience = Column(Text)
     education = Column(Text)
     skills = Column(Text)
+    projects = Column(Text)
+    research = Column(Text)
     ai_prompt = Column(Text)
     
     # Timestamp when version was created
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Who created this version (for future collaboration feature)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)

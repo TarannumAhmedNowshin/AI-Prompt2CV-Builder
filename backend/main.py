@@ -38,7 +38,7 @@ async def startup_event():
 async def root():
     """Root endpoint"""
     return {
-        "message": "Welcome to CV Builder API",
+        "message": "Welcome to AI Prompt2CV Builder API",
         "version": settings.APP_VERSION,
         "docs": "/docs",
         "status": "running"

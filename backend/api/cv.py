@@ -40,6 +40,8 @@ def create_version_snapshot(db: Session, cv: CV, user_id: int, change_summary: s
         experience=cv.experience,
         education=cv.education,
         skills=cv.skills,
+        projects=cv.projects,
+        research=cv.research,
         ai_prompt=cv.ai_prompt,
         created_by_id=user_id
     )

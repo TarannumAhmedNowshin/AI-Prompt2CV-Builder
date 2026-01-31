@@ -24,6 +24,8 @@ class CV(Base):
     experience = Column(Text)
     education = Column(Text)
     skills = Column(Text)
+    projects = Column(Text)
+    research = Column(Text)
     
     # AI Prompt (stored for reference)
     ai_prompt = Column(Text)

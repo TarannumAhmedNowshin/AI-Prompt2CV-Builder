@@ -20,6 +20,8 @@ class CVBase(BaseModel):
     experience: Optional[str] = None
     education: Optional[str] = None
     skills: Optional[str] = None
+    projects: Optional[str] = None
+    research: Optional[str] = None
     ai_prompt: Optional[str] = None
 
 
@@ -40,6 +42,8 @@ class CVUpdate(BaseModel):
     experience: Optional[str] = None
     education: Optional[str] = None
     skills: Optional[str] = None
+    projects: Optional[str] = None
+    research: Optional[str] = None
     ai_prompt: Optional[str] = None
 
 
@@ -92,6 +96,11 @@ class CVVersionBase(BaseModel):
     version_name: Optional[str] = None
     change_summary: Optional[str] = None
     created_at: datetime
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 class CVVersionListItem(CVVersionBase):
@@ -100,6 +109,9 @@ class CVVersionListItem(CVVersionBase):
     
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 class CVVersionDetail(CVVersionBase):
@@ -120,6 +132,9 @@ class CVVersionDetail(CVVersionBase):
     
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.isoformat() if v else None
+        }
 
 
 class CVVersionCreate(BaseModel):

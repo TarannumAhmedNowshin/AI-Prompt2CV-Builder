@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo AI CV Builder - Full Stack Startup
+echo AI Prompt2CV Builder - Full Stack Startup
 echo ====================================
 echo.
 echo This will start both backend and frontend servers

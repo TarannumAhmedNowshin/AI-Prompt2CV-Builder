@@ -1,6 +1,6 @@
 @echo off
 echo ====================================
-echo AI CV Builder - Frontend Setup
+echo AI Prompt2CV Builder - Frontend Setup
 echo ====================================
 echo.
 

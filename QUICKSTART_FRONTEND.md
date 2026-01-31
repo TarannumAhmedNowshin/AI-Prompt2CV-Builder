@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - AI CV Builder
+# 🚀 Quick Start Guide - AI Prompt2CV Builder
 
 ## Getting Started in 5 Minutes
 

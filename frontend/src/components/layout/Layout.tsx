@@ -19,50 +19,56 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2.5 group"
               >
-                <FileText className="h-8 w-8 text-primary-600" />
-                <span className="text-xl font-bold text-gray-900">AI CV Builder</span>
+                <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  AI Prompt2CV Builder
+                </span>
               </button>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {isAuthenticated ? (
                 <>
                   <button
                     onClick={() => router.push('/dashboard')}
-                    className="flex items-center space-x-2 text-gray-700 hover:text-primary-600 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 text-slate-600 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
                   >
-                    <Home className="h-5 w-5" />
-                    <span>Dashboard</span>
+                    <Home className="h-4 w-4" />
+                    <span className="font-medium">Dashboard</span>
                   </button>
                   
-                  <div className="flex items-center space-x-2 text-gray-700">
-                    <User className="h-5 w-5" />
-                    <span>{user?.username}</span>
+                  <div className="flex items-center space-x-2 px-3 py-1.5 bg-slate-50 rounded-full">
+                    <div className="w-7 h-7 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700">{user?.username}</span>
                   </div>
 
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={handleLogout}
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
                   </Button>
                 </>
               ) : (
                 <>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
                     onClick={() => router.push('/login')}
                   >
@@ -88,10 +94,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-gray-600 text-sm">
-            © 2026 AI CV Builder. Built with Next.js and FastAPI.
+      <footer className="bg-white border-t border-slate-100 mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <p className="text-center text-slate-500 text-sm">
+            AI Prompt2CV Builder &middot; Built with Next.js and FastAPI
           </p>
         </div>
       </footer>

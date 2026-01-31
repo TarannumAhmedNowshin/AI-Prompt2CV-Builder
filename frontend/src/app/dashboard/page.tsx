@@ -96,88 +96,105 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <div className="space-y-8">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg p-8 text-white">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {user?.username}!
-          </h1>
-          <p className="text-primary-100">
-            Ready to create or edit your professional CV?
-          </p>
+        <div className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 rounded-2xl p-8 text-white overflow-hidden shadow-soft-lg">
+          {/* Decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-primary-400/20 rounded-full blur-2xl"></div>
+          </div>
+          
+          <div className="relative">
+            <h1 className="text-3xl font-bold mb-2">
+              Welcome back, {user?.username}!
+            </h1>
+            <p className="text-primary-100 text-lg">
+              Ready to create or edit your professional CV?
+            </p>
+          </div>
         </div>
 
         {/* Quick Actions */}
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">My CVs</h2>
-          <Button onClick={handleCreateNew}>
-            <Plus className="h-5 w-5 mr-2" />
-            Create New CV
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">My CVs</h2>
+            <p className="text-slate-500 mt-1">Manage your professional resumes</p>
+          </div>
+          <Button onClick={handleCreateNew} className="shadow-lg hover:shadow-xl">
+            <Plus className="h-5 w-5" />
+            <span>Create New CV</span>
           </Button>
         </div>
 
         {/* CV List */}
         {isLoading ? (
-          <Card>
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading your CVs...</p>
+          <Card variant="elevated">
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-50 rounded-full mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent"></div>
+              </div>
+              <p className="text-slate-500">Loading your CVs...</p>
             </div>
           </Card>
         ) : cvs.length === 0 ? (
-          <Card>
-            <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <Card variant="elevated">
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-2xl mb-6">
+                <FileText className="h-10 w-10 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-2">
                 No CVs yet
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-slate-500 mb-8 max-w-sm mx-auto">
                 Get started by creating your first CV with AI assistance
               </p>
-              <Button onClick={handleCreateNew}>
-                <Plus className="h-5 w-5 mr-2" />
-                Create Your First CV
+              <Button onClick={handleCreateNew} className="shadow-lg">
+                <Plus className="h-5 w-5" />
+                <span>Create Your First CV</span>
               </Button>
             </div>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cvs.map((cv) => (
-              <Card key={cv.id} className="hover:shadow-lg transition-shadow">
+              <Card key={cv.id} className="hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer" variant="elevated">
                 <div className="space-y-4">
                   <div className="flex items-start justify-between">
-                    <FileText className="h-8 w-8 text-primary-600" />
-                    <div className="flex space-x-2">
+                    <div className="p-2.5 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl shadow-md">
+                      <FileText className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="flex space-x-1">
                       <button
                         onClick={() => handleEdit(cv.id)}
-                        className="text-gray-600 hover:text-primary-600 transition-colors"
+                        className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-150"
                       >
-                        <Edit className="h-5 w-5" />
+                        <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(cv.id)}
-                        className="text-gray-600 hover:text-red-600 transition-colors"
+                        className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-150"
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-1">
                       {cv.title}
                     </h3>
                     {cv.full_name && (
-                      <p className="text-sm text-gray-600 mb-2">{cv.full_name}</p>
+                      <p className="text-sm text-slate-500 mb-3">{cv.full_name}</p>
                     )}
-                    <div className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 mb-2">
+                    <div className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 border border-primary-200/50 mb-3">
                       {cv.template}
                     </div>
-                    <div className="space-y-1 text-sm text-gray-600">
+                    <div className="space-y-1.5 text-sm text-slate-500">
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
+                        <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400" />
                         Created: {new Date(cv.created_at).toLocaleDateString()}
                       </div>
                       <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
+                        <Calendar className="h-3.5 w-3.5 mr-2 text-slate-400" />
                         Updated: {new Date(cv.updated_at).toLocaleDateString()}
                       </div>
                     </div>

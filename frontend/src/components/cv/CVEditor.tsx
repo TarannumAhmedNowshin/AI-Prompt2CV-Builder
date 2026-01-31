@@ -66,12 +66,12 @@ export default function CVEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* AI Assistant Card */}
-      <Card title="AI Assistant" subtitle="Use AI to generate content for your CV">
+      <Card title="AI Assistant" subtitle="Use AI to generate content for your CV" variant="elevated">
         <div className="space-y-4">
           <textarea
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 text-slate-800 placeholder:text-slate-400"
             rows={3}
             placeholder="Describe your experience, skills, or what you want to include in your CV..."
             value={aiPrompt}
@@ -81,10 +81,10 @@ export default function CVEditor({
             onClick={handleAIGenerate}
             isLoading={isGenerating}
             fullWidth
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 shadow-lg"
           >
-            <Sparkles className="h-5 w-5 mr-2" />
-            Generate with AI
+            <Sparkles className="h-5 w-5" />
+            <span>Generate with AI</span>
           </Button>
         </div>
       </Card>
@@ -93,7 +93,7 @@ export default function CVEditor({
       {cvId && <JobSuggestions cvId={cvId} />}
 
       {/* CV Title */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <Input
           label="CV Title"
           name="title"
@@ -229,34 +229,80 @@ export function convertLegacyCVData(legacyData: {
   experience: string;
   education: string;
   skills: string;
+  projects?: string;
+  research?: string;
 }): CVEditorData {
   // Parse experience from text
   const experienceEntries: ExperienceEntry[] = legacyData.experience
-    ? legacyData.experience.split('\n').filter(e => e.trim()).map((exp, idx) => ({
-        id: `exp-${idx}`,
-        jobTitle: exp.trim(),
-        employer: '',
-        startDate: '',
-        endDate: '',
-        location: '',
-        description: '',
-        isVisible: true,
-      }))
+    ? legacyData.experience.split('\n\n').filter(e => e.trim()).map((exp, idx) => {
+        const lines = exp.split('\n');
+        const firstLine = lines[0] || '';
+        return {
+          id: `exp-${idx}`,
+          jobTitle: firstLine.trim(),
+          employer: '',
+          startDate: '',
+          endDate: '',
+          location: '',
+          description: lines.slice(1).join('\n').trim(),
+          isVisible: true,
+        };
+      })
+    : [];
+
+  // Parse projects from text
+  const projectEntries: ProjectEntry[] = legacyData.projects
+    ? legacyData.projects.split('\n\n').filter(p => p.trim()).map((proj, idx) => {
+        const lines = proj.split('\n');
+        const firstLine = lines[0] || '';
+        return {
+          id: `proj-${idx}`,
+          name: firstLine.trim(),
+          startDate: '',
+          endDate: '',
+          technologies: '',
+          description: lines.slice(1).join('\n').trim(),
+          link: '',
+          isVisible: true,
+        };
+      })
+    : [];
+
+  // Parse research from text
+  const researchEntries: ResearchEntry[] = legacyData.research
+    ? legacyData.research.split('\n\n').filter(r => r.trim()).map((res, idx) => {
+        const lines = res.split('\n');
+        const firstLine = lines[0] || '';
+        return {
+          id: `res-${idx}`,
+          title: firstLine.trim(),
+          publisher: '',
+          date: '',
+          authors: '',
+          description: lines.slice(1).join('\n').trim(),
+          link: '',
+          isVisible: true,
+        };
+      })
     : [];
 
   // Parse education from text
   const educationEntries: EducationEntry[] = legacyData.education
-    ? legacyData.education.split('\n').filter(e => e.trim()).map((edu, idx) => ({
-        id: `edu-${idx}`,
-        school: edu.trim(),
-        degree: '',
-        field: '',
-        startDate: '',
-        endDate: '',
-        location: '',
-        description: '',
-        isVisible: true,
-      }))
+    ? legacyData.education.split('\n\n').filter(e => e.trim()).map((edu, idx) => {
+        const lines = edu.split('\n');
+        const firstLine = lines[0] || '';
+        return {
+          id: `edu-${idx}`,
+          school: '',
+          degree: firstLine.trim(),
+          field: '',
+          startDate: '',
+          endDate: '',
+          location: '',
+          description: lines.slice(1).join('\n').trim(),
+          isVisible: true,
+        };
+      })
     : [];
 
   // Parse skills from comma-separated text
@@ -278,9 +324,9 @@ export function convertLegacyCVData(legacyData: {
     summary: legacyData.summary,
     experience: experienceEntries,
     education: educationEntries,
-    projects: [],
+    projects: projectEntries,
     skills: skillsList,
-    research: [],
+    research: researchEntries,
     sectionTitles: {
       summary: 'Professional Summary',
       experience: 'Professional Experience',
@@ -303,6 +349,8 @@ export function convertToLegacyFormat(data: CVEditorData): {
   experience: string;
   education: string;
   skills: string;
+  projects: string;
+  research: string;
 } {
   // Convert experience entries to text
   const experienceText = data.experience
@@ -317,7 +365,7 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert projects to text and append to experience
+  // Convert projects to text
   const projectsText = data.projects
     .filter(p => p.isVisible)
     .map(p => {
@@ -330,7 +378,7 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert research to text and append to experience
+  // Convert research to text
   const researchText = data.research
     .filter(r => r.isVisible)
     .map(r => {
@@ -343,15 +391,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
       return parts.join(' ');
     })
     .join('\n\n');
-
-  // Combine all work-related content
-  let combinedExperience = experienceText;
-  if (projectsText) {
-    combinedExperience += (combinedExperience ? '\n\n' : '') + `${data.sectionTitles.projects}:\n` + projectsText;
-  }
-  if (researchText) {
-    combinedExperience += (combinedExperience ? '\n\n' : '') + `${data.sectionTitles.research}:\n` + researchText;
-  }
 
   // Convert education entries to text
   const educationText = data.education
@@ -377,8 +416,10 @@ export function convertToLegacyFormat(data: CVEditorData): {
     phone: data.personalInfo.phone,
     location: data.personalInfo.location,
     summary: data.summary,
-    experience: combinedExperience,
+    experience: experienceText,
     education: educationText,
     skills: skillsText,
+    projects: projectsText,
+    research: researchText,
   };
 }

@@ -134,7 +134,12 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse the date string and ensure it's treated as UTC
+    const utcDateString = dateString.includes('Z') || dateString.includes('+') || dateString.includes('T') && dateString.split('T')[1].includes('-')
+      ? dateString 
+      : dateString.includes('T') ? `${dateString}Z` : dateString;
+    
+    const date = new Date(utcDateString);
     return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -146,18 +151,26 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
   };
 
   const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse the date string and ensure it's treated as UTC
+    // If the string doesn't have timezone info, append 'Z' to treat it as UTC
+    const utcDateString = dateString.includes('Z') || dateString.includes('+') || dateString.includes('T') && dateString.split('T')[1].includes('-')
+      ? dateString 
+      : dateString.includes('T') ? `${dateString}Z` : dateString;
+    
+    const date = new Date(utcDateString);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    const diffMs = Math.abs(now.getTime() - date.getTime());
+    const diffSecs = Math.round(diffMs / 1000);
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return formatDate(dateString);
+    if (diffSecs < 10) return 'Just now';
+    if (diffSecs < 60) return `${diffSecs} seconds ago`;
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    return formatDate(utcDateString);
   };
 
   if (!isOpen) return null;
@@ -166,33 +179,35 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
         onClick={onClose}
       />
       
       {/* Sidebar Panel */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right">
+      <div className="fixed right-0 top-0 h-full w-full max-w-3xl bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Version History</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-primary-50/80 to-white">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-xl">
+              <History className="h-5 w-5 text-primary-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">Version History</h2>
           </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowSaveModal(true)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2 px-4 py-2 shadow-sm hover:shadow-md transition-shadow"
             >
               <Save className="h-4 w-4" />
-              Save Version
+              <span className="hidden sm:inline">Save Version</span>
             </Button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X className="h-5 w-5 text-gray-500" />
+              <X className="h-5 w-5 text-gray-600" />
             </button>
           </div>
         </div>
@@ -200,54 +215,57 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
         {/* Content */}
         <div className="flex-1 overflow-hidden flex">
           {/* Version List */}
-          <div className="w-1/2 border-r border-gray-200 overflow-y-auto">
+          <div className="w-2/5 border-r border-gray-200 overflow-y-auto bg-gray-50">
             {isLoading ? (
               <div className="flex items-center justify-center h-32">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
               </div>
             ) : versions.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">
-                <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                <p>No versions yet</p>
-                <p className="text-sm mt-1">Versions are created automatically when you save changes</p>
+              <div className="p-6 text-center text-gray-500">
+                <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                <p className="font-medium">No versions yet</p>
+                <p className="text-sm mt-2">Versions are created automatically when you save changes</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-200">
                 {versions.map((version) => (
                   <div
                     key={version.id}
                     onClick={() => fetchVersionDetail(version.id)}
-                    className={`p-3 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      selectedVersion?.id === version.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''
+                    className={`group p-4 cursor-pointer hover:bg-white transition-all duration-200 ${
+                      selectedVersion?.id === version.id 
+                        ? 'bg-white border-l-4 border-blue-600 shadow-sm' 
+                        : 'hover:border-l-4 hover:border-blue-300'
                     }`}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-semibold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-md">
                             v{version.version_number}
                           </span>
                           {version.version_name && (
-                            <span className="text-sm font-medium text-gray-900 truncate">
+                            <span className="text-sm font-semibold text-gray-900 truncate">
                               {version.version_name}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {getRelativeTime(version.created_at)}
-                        </p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{getRelativeTime(version.created_at)}</span>
+                        </div>
                         {version.change_summary && (
-                          <p className="text-xs text-gray-600 mt-1 truncate">
+                          <p className="text-sm text-gray-600 mt-2 line-clamp-2">
                             {version.change_summary}
                           </p>
                         )}
                       </div>
                       <button
                         onClick={(e) => handleDeleteVersion(version.id, e)}
-                        className="p-1 hover:bg-red-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-1.5 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                         title="Delete version"
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-gray-400 hover:text-red-500" />
+                        <Trash2 className="h-4 w-4 text-gray-400 hover:text-red-600" />
                       </button>
                     </div>
                   </div>
@@ -257,99 +275,115 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
           </div>
 
           {/* Version Preview */}
-          <div className="w-1/2 overflow-y-auto bg-gray-50">
+          <div className="w-3/5 overflow-y-auto bg-white">
             {selectedVersion ? (
-              <div className="p-4">
-                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">
-                      Version {selectedVersion.version_number}
-                    </h3>
+              <div className="p-6">
+                {/* Version Info Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl border border-blue-200 p-5 mb-6 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">
+                        Version {selectedVersion.version_number}
+                      </h3>
+                      {selectedVersion.version_name && (
+                        <p className="text-base text-gray-700 font-medium">{selectedVersion.version_name}</p>
+                      )}
+                    </div>
                     <Button
                       size="sm"
                       onClick={() => handleRestore(selectedVersion.id)}
                       isLoading={isRestoring}
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all"
                     >
-                      <RotateCcw className="h-4 w-4 mr-1" />
+                      <RotateCcw className="h-4 w-4 mr-2" />
                       Restore
                     </Button>
                   </div>
                   
-                  <div className="space-y-2 text-sm">
-                    <p className="text-gray-500">
-                      <Clock className="h-3.5 w-3.5 inline mr-1" />
-                      {formatDate(selectedVersion.created_at)}
-                    </p>
-                    {selectedVersion.version_name && (
-                      <p className="text-gray-700 font-medium">{selectedVersion.version_name}</p>
-                    )}
-                    {selectedVersion.change_summary && (
-                      <p className="text-gray-600">{selectedVersion.change_summary}</p>
-                    )}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    <span>{formatDate(selectedVersion.created_at)}</span>
                   </div>
+                  
+                  {selectedVersion.change_summary && (
+                    <p className="text-sm text-gray-700 mt-3 p-3 bg-white rounded-lg border border-blue-100">
+                      {selectedVersion.change_summary}
+                    </p>
+                  )}
                 </div>
 
                 {/* Preview Content */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
-                  <h4 className="font-medium text-gray-900 border-b pb-2">Content Preview</h4>
-                  
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase">Title</label>
-                    <p className="text-gray-900">{selectedVersion.title || '-'}</p>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div className="px-5 py-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <Eye className="h-5 w-5 text-gray-600" />
+                      Content Preview
+                    </h4>
                   </div>
                   
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase">Template</label>
-                    <p className="text-gray-900 capitalize">{selectedVersion.template || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase">Name</label>
-                    <p className="text-gray-900">{selectedVersion.full_name || '-'}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
-                    <p className="text-gray-900">{selectedVersion.email || '-'}</p>
-                  </div>
-                  
-                  {selectedVersion.summary && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Summary</label>
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap line-clamp-4">
-                        {selectedVersion.summary}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {selectedVersion.skills && (
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Skills</label>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {selectedVersion.skills.split(',').slice(0, 5).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs"
-                          >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                        {selectedVersion.skills.split(',').length > 5 && (
-                          <span className="px-2 py-0.5 text-gray-500 text-xs">
-                            +{selectedVersion.skills.split(',').length - 5} more
-                          </span>
-                        )}
+                  <div className="p-5 space-y-5">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Title</label>
+                        <p className="text-base text-gray-900 font-medium">{selectedVersion.title || '-'}</p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Template</label>
+                        <p className="text-base text-gray-900 font-medium capitalize">{selectedVersion.template || '-'}</p>
                       </div>
                     </div>
-                  )}
+                    
+                    <div className="pt-3 border-t border-gray-100">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Name</label>
+                      <p className="text-base text-gray-900">{selectedVersion.full_name || '-'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Email</label>
+                      <p className="text-base text-gray-900">{selectedVersion.email || '-'}</p>
+                    </div>
+                    
+                    {selectedVersion.summary && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Summary</label>
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {selectedVersion.summary}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {selectedVersion.skills && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Skills</label>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedVersion.skills.split(',').slice(0, 8).map((skill, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg text-sm font-medium border border-blue-200"
+                            >
+                              {skill.trim()}
+                            </span>
+                          ))}
+                          {selectedVersion.skills.split(',').length > 8 && (
+                            <span className="px-3 py-1.5 text-gray-600 text-sm font-medium">
+                              +{selectedVersion.skills.split(',').length - 8} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
-                <div className="text-center">
-                  <Eye className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>Select a version to preview</p>
+                <div className="text-center p-8">
+                  <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <Eye className="h-10 w-10 text-gray-300" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-600">Select a version to preview</p>
+                  <p className="text-sm text-gray-500 mt-2">Click on any version from the left to see its details</p>
                 </div>
               </div>
             )}
@@ -357,11 +391,11 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
         </div>
 
         {/* Info Footer */}
-        <div className="p-3 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-start gap-2 text-xs text-gray-500">
-            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <p>
-              Versions are created automatically when you save changes. 
+        <div className="px-6 py-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50">
+          <div className="flex items-start gap-3 text-sm text-gray-600">
+            <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600" />
+            <p className="leading-relaxed">
+              <span className="font-medium text-gray-900">Auto-save enabled.</span> Versions are created automatically when you save changes. 
               Restoring a version will save your current work first.
             </p>
           </div>

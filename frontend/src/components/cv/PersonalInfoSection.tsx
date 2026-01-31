@@ -33,22 +33,22 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       <div className="p-5">
         <div className="flex items-start gap-4">
           {/* Photo Area */}
           <div className="flex-shrink-0">
             <div 
               onClick={handlePhotoUpload}
-              className="w-20 h-20 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors relative group"
+              className="w-20 h-20 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center cursor-pointer hover:border-primary-400 hover:bg-primary-50 transition-all duration-200 relative group"
             >
               {data.photo ? (
-                <img src={data.photo} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                <img src={data.photo} alt="Profile" className="w-full h-full rounded-2xl object-cover" />
               ) : (
-                <Camera className="h-8 w-8 text-gray-400 group-hover:text-gray-500" />
+                <Camera className="h-8 w-8 text-slate-400 group-hover:text-primary-500 transition-colors" />
               )}
-              <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                <Camera className="h-6 w-6 text-white" />
+              <div className="absolute inset-0 rounded-2xl bg-primary-600/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                <Camera className="h-6 w-6 text-primary-700" />
               </div>
             </div>
           </div>
@@ -57,25 +57,25 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-slate-900">
                   {data.fullName || 'Your Name'}
                 </h2>
                 <div className="mt-2 space-y-1.5">
                   {data.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Mail className="h-4 w-4 text-primary-500" />
                       <span>{data.email}</span>
                     </div>
                   )}
                   {data.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Phone className="h-4 w-4 text-primary-500" />
                       <span>{data.phone}</span>
                     </div>
                   )}
                   {data.location && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <MapPin className="h-4 w-4 text-primary-500" />
                       <span>{data.location}</span>
                     </div>
                   )}
@@ -88,7 +88,7 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   setEditData(data);
                   setIsEditing(true);
                 }}
-                className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-2 text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-xl transition-all duration-150"
               >
                 <Pencil className="h-5 w-5" />
               </button>

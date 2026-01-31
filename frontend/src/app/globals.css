@@ -3,23 +3,158 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 249, 250, 251;
+  --foreground-rgb: 15, 23, 42;
+  --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 255, 255, 255;
+  --primary-rgb: 14, 165, 233;
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      180deg,
+      rgb(var(--background-start-rgb)) 0%,
+      rgb(var(--background-end-rgb)) 100%
+    );
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer components {
+  /* Glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-light {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Subtle hover lift effect */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Subtle border glow on focus */
+  .focus-glow:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  }
+
+  /* Section divider */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.2), transparent);
+  }
+
+  /* Slide-in animation for panels */
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Smooth card hover */
+  .card-hover {
+    transition: all 0.2s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* PDF Export Optimizations */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure consistent sizing for PDF export */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* CV Print/Export styles - optimized for A4 PDF */
+.cv-print-optimized {
+  font-size: 10.5pt;
+  line-height: 1.5;
+}
+
+.cv-print-optimized h1 {
+  font-size: 24pt;
+  line-height: 1.2;
+}
+
+.cv-print-optimized h2 {
+  font-size: 14pt;
+  line-height: 1.3;
+}
+
+.cv-print-optimized h3 {
+  font-size: 12pt;
+  line-height: 1.3;
+}
+
+.cv-print-optimized .text-3xl {
+  font-size: 24pt !important;
+  line-height: 1.2 !important;
+}
+
+.cv-print-optimized .text-lg {
+  font-size: 14pt !important;
+  line-height: 1.3 !important;
+}
+
+.cv-print-optimized .text-sm {
+  font-size: 10pt !important;
+  line-height: 1.4 !important;
+}
+
+.cv-print-optimized .text-xs {
+  font-size: 9pt !important;
+  line-height: 1.3 !important;
 }

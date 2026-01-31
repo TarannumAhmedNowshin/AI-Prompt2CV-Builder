@@ -1,4 +1,4 @@
-# 🚀 Quick Start Guide - CV Builder Backend
+# 🚀 Quick Start Guide - AI Prompt2CV Builder Backend
 
 ## ⚡ Get Started in 3 Steps
 

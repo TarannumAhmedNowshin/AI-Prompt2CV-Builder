@@ -25,15 +25,15 @@ export default function CVSection({
   className = '',
 }: CVSectionProps) {
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm ${className}`}>
       {/* Section Header */}
-      <div className="px-5 py-4 flex items-center justify-between">
+      <div className="px-5 py-4 flex items-center justify-between bg-slate-50/50">
         <button
           onClick={onToggle}
-          className="flex items-center gap-3 flex-1 text-left"
+          className="flex items-center gap-3 flex-1 text-left group"
         >
-          <span className="text-gray-700">{icon}</span>
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <span className="text-primary-600">{icon}</span>
+          <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
         </button>
         
         <div className="flex items-center gap-2">
@@ -43,13 +43,13 @@ export default function CVSection({
                 e.stopPropagation();
                 onEditHeading();
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-500 hover:text-primary-600 border border-slate-200 rounded-lg hover:bg-primary-50 hover:border-primary-200 transition-all duration-150"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit Heading
             </button>
           )}
-          <button onClick={onToggle} className="p-1 text-gray-500 hover:text-gray-700">
+          <button onClick={onToggle} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-150">
             {isOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
           </button>
         </div>
@@ -65,7 +65,7 @@ export default function CVSection({
             <div className="mt-4 flex justify-center">
               <button
                 onClick={onAddEntry}
-                className="flex items-center gap-2 px-4 py-2.5 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-white transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 text-slate-500 hover:text-primary-600 border border-slate-200 border-dashed rounded-xl hover:bg-primary-50 hover:border-primary-300 transition-all duration-150"
               >
                 <Plus className="h-4 w-4" />
                 Add Entry

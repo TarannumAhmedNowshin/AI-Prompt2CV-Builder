@@ -7,6 +7,7 @@ interface CardProps {
   title?: string;
   subtitle?: string;
   onClose?: () => void;
+  variant?: 'default' | 'elevated' | 'bordered';
 }
 
 const Card: React.FC<CardProps> = ({ 
@@ -14,20 +15,27 @@ const Card: React.FC<CardProps> = ({
   className = '', 
   title,
   subtitle,
-  onClose 
+  onClose,
+  variant = 'default'
 }) => {
+  const variantStyles = {
+    default: 'bg-white shadow-sm border border-slate-200',
+    elevated: 'bg-white shadow-md border border-slate-100',
+    bordered: 'bg-white border-2 border-slate-200',
+  };
+
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}>
+    <div className={`rounded-2xl overflow-hidden ${variantStyles[variant]} ${className}`}>
       {(title || onClose) && (
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-start">
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-start">
           <div>
-            {title && <h3 className="text-lg font-semibold text-gray-900">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+            {title && <h3 className="text-lg font-semibold text-slate-800">{title}</h3>}
+            {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
           </div>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-150"
             >
               <X className="h-5 w-5" />
             </button>

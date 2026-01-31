@@ -39,15 +39,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-50 px-4 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-100/40 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="w-full max-w-md relative">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your account to continue</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg mb-6">
+            <LogIn className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+          <p className="text-slate-600">Sign in to your account to continue</p>
         </div>
 
-        <Card>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card variant="elevated" className="shadow-soft-lg">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email or Username"
               name="username_or_email"
@@ -76,15 +85,16 @@ export default function LoginPage() {
               size="lg"
               fullWidth
               isLoading={isLoading}
+              className="mt-2"
             >
-              <LogIn className="h-5 w-5 mr-2" />
-              Sign In
+              <LogIn className="h-5 w-5" />
+              <span>Sign In</span>
             </Button>
 
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
+            <div className="text-center pt-2">
+              <p className="text-sm text-slate-600">
                 Don't have an account?{' '}
-                <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+                <Link href="/register" className="text-primary-600 hover:text-primary-700 font-semibold transition-colors">
                   Sign up
                 </Link>
               </p>

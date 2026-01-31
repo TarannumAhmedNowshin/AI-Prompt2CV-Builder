@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # Application
-    APP_NAME: str = "CV Builder API"
+    APP_NAME: str = "AI Prompt2CV Builder API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     

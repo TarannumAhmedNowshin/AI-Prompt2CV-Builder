@@ -1,6 +1,6 @@
-# AI CV Builder - Frontend
+# AI Prompt2CV Builder - Frontend
 
-Next.js frontend for the AI CV Builder application.
+Next.js frontend for the AI Prompt2CV Builder application.
 
 ## Getting Started
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Startup script for CV Builder backend
+Startup script for AI Prompt2CV Builder backend
 """
 import subprocess
 import sys
@@ -34,7 +34,7 @@ def install_dependencies():
 
 def start_server():
     """Start the FastAPI server"""
-    print_header("Starting CV Builder Backend")
+    print_header("Starting AI Prompt2CV Builder Backend")
     print("Server will be available at:")
     print("  - API: http://localhost:8000")
     print("  - Docs: http://localhost:8000/docs")
@@ -53,7 +53,7 @@ def start_server():
 def main():
     """Main startup function"""
     print("\n" + "🚀 "*15)
-    print("      CV BUILDER - Backend Startup")
+    print("      AI PROMPT2CV BUILDER - Backend Startup")
     print("🚀 "*15)
     
     # Change to script directory
