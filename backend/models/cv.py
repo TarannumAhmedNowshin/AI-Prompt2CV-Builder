@@ -32,5 +32,6 @@ class CV(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationship
+    # Relationships
     user = relationship("User", back_populates="cvs")
+    versions = relationship("CVVersion", back_populates="cv", cascade="all, delete-orphan", order_by="desc(CVVersion.version_number)")

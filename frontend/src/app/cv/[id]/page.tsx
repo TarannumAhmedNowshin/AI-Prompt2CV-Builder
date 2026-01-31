@@ -7,7 +7,8 @@ import Button from '@/components/ui/Button';
 import ModernTemplate from '@/components/cv/ModernTemplate';
 import ClassicTemplate from '@/components/cv/ClassicTemplate';
 import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat, convertLegacyCVData } from '@/components/cv/CVEditor';
-import { Save, Download, ArrowLeft } from 'lucide-react';
+import VersionHistory from '@/components/cv/VersionHistory';
+import { Save, Download, ArrowLeft, History } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToPDF, prepareCVForExport } from '@/lib/pdf-export';
 
@@ -25,6 +26,7 @@ export default function EditCVPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   useEffect(() => {
     if (cvId) {
@@ -304,6 +306,14 @@ export default function EditCVPage() {
                 <h1 className="text-2xl font-bold text-gray-900">Edit CV</h1>
               </div>
               <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowVersionHistory(true)}
+                  title="View version history"
+                >
+                  <History className="h-4 w-4 mr-2" />
+                  History
+                </Button>
                 <Button variant="outline" onClick={() => router.push('/dashboard')}>
                   Cancel
                 </Button>
@@ -404,6 +414,17 @@ export default function EditCVPage() {
             </div>
           </div>
         </div>
+
+        {/* Version History Panel */}
+        <VersionHistory
+          cvId={cvId as string}
+          isOpen={showVersionHistory}
+          onClose={() => setShowVersionHistory(false)}
+          onRestore={() => {
+            // Re-fetch CV data after restore
+            fetchCV();
+          }}
+        />
       </div>
     </ProtectedRoute>
   );

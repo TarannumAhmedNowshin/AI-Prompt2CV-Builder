@@ -30,5 +30,5 @@ def get_db():
 
 def init_db():
     """Initialize database tables"""
-    from ..models import User, CV  # Import all models
+    from ..models import User, CV, CVVersion  # Import all models
     Base.metadata.create_all(bind=engine)

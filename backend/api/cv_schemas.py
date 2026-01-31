@@ -82,3 +82,55 @@ class JobSuggestionResponse(BaseModel):
     overall_recommendations: list[str]
     strengths: str
     gaps: str
+
+
+# ============ Version History Schemas ============
+
+class CVVersionBase(BaseModel):
+    """Base schema for CV version"""
+    version_number: int
+    version_name: Optional[str] = None
+    change_summary: Optional[str] = None
+    created_at: datetime
+
+
+class CVVersionListItem(CVVersionBase):
+    """Schema for version list item (lightweight)"""
+    id: int
+    
+    class Config:
+        from_attributes = True
+
+
+class CVVersionDetail(CVVersionBase):
+    """Schema for full version details with snapshot data"""
+    id: int
+    cv_id: int
+    title: str
+    template: str
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    summary: Optional[str] = None
+    experience: Optional[str] = None
+    education: Optional[str] = None
+    skills: Optional[str] = None
+    ai_prompt: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class CVVersionCreate(BaseModel):
+    """Schema for creating a named version"""
+    version_name: Optional[str] = Field(None, max_length=255)
+    change_summary: Optional[str] = Field(None, max_length=500)
+
+
+class CVVersionRestore(BaseModel):
+    """Schema for restore response"""
+    message: str
+    restored_version: int
+    new_version_created: int
+

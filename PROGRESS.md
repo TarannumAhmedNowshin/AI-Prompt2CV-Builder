@@ -20,7 +20,8 @@ ideal codebase/
 │   │   └── config.py            # Settings & environment
 │   ├── models/                  # SQLAlchemy Models
 │   │   ├── user.py              # User model
-│   │   └── cv.py                # CV model
+│   │   ├── cv.py                # CV model
+│   │   └── cv_version.py        # CV Version model (version history)
 │   ├── services/                # Business Logic
 │   │   ├── auth_service.py      # Auth logic
 │   │   └── ai_service.py        # Azure OpenAI integration
@@ -40,7 +41,9 @@ ideal codebase/
 │   │   │   ├── cv/              # CV templates & editor components
 │   │   │   │   ├── ModernTemplate.tsx
 │   │   │   │   ├── ClassicTemplate.tsx
-│   │   │   │   ├── CVEditor.tsx          # Main customizable editor
+│   │   │   ├── CVEditor.tsx          # Main customizable editor
+│   │   │   │   ├── JobSuggestions.tsx    # Job match advisor component
+│   │   │   │   ├── VersionHistory.tsx    # Version history panel (Google Docs style)
 │   │   │   │   ├── CVSection.tsx         # Base collapsible section
 │   │   │   │   ├── PersonalInfoSection.tsx
 │   │   │   │   ├── SummarySection.tsx
@@ -255,6 +258,96 @@ ideal codebase/
 
 ---
 
+## ✅ Phase 3.7: Job Match Advisor (COMPLETED)
+
+### Backend ✅
+- [x] **AI Job Matching Service** (`ai_service.py`):
+  - [x] `generate_job_suggestions()` method - Analyzes CV against job descriptions
+  - [x] Returns match score (0-100%), strengths, gaps, and recommendations
+  - [x] Identifies skills to highlight and skills to add
+  - [x] Suggests keywords and experience improvements
+- [x] **API Endpoint** (`cv.py`):
+  - [x] POST /api/cv/{cv_id}/job-suggestions - Get job-tailored suggestions
+  - [x] Ownership verification and error handling
+- [x] **Schemas** (`cv_schemas.py`):
+  - [x] `JobSuggestionRequest` - Job description input validation
+  - [x] `JobSuggestionResponse` - Structured suggestion output
+
+### Frontend ✅
+- [x] **JobSuggestions Component** (`JobSuggestions.tsx`):
+  - [x] Job description textarea input
+  - [x] "Suggest Me for This Position" button
+  - [x] Visual match score display with color-coded percentage
+  - [x] Strengths and gaps analysis cards
+  - [x] Skills to highlight (blue tags)
+  - [x] Skills to add (purple tags)
+  - [x] Keywords to include (gray tags)
+  - [x] Summary and experience suggestions
+  - [x] Overall recommendations as bullet list
+  - [x] "Clear and Try Another Job" button
+- [x] **Integration**:
+  - [x] Added to CVEditor component (below AI Assistant)
+  - [x] Available on CV edit page (`/cv/[id]`)
+  - [x] Only shown for existing CVs with saved data
+
+### Features
+- **Match Score**: AI calculates percentage match between CV and job
+- **Strengths Analysis**: Highlights what aligns well with the job
+- **Gap Analysis**: Identifies missing or weak areas
+- **Skill Recommendations**: Shows which skills to emphasize and which to add
+- **Keyword Optimization**: Suggests important keywords from job description
+- **Tailored Advice**: Provides specific recommendations for CV improvement
+
+---
+
+## ✅ Phase 3.8: Version History (Google Docs Style) (COMPLETED)
+
+### Backend ✅
+- [x] **CVVersion Model** (`models/cv_version.py`):
+  - [x] Stores complete snapshots of CV state
+  - [x] Version numbering, names, and change summaries
+  - [x] Relationship with CV model (cascade delete)
+  - [x] Tracks who created each version
+- [x] **Version API Endpoints** (`cv.py`):
+  - [x] GET /api/cv/{cv_id}/versions - List all versions of a CV
+  - [x] GET /api/cv/{cv_id}/versions/{version_id} - Get full version details
+  - [x] POST /api/cv/{cv_id}/versions - Create named version manually
+  - [x] POST /api/cv/{cv_id}/versions/{version_id}/restore - Restore to previous version
+  - [x] DELETE /api/cv/{cv_id}/versions/{version_id} - Delete a version
+- [x] **Auto-versioning**:
+  - [x] Automatically creates version snapshot before each CV update
+  - [x] Preserves complete CV state (all fields)
+- [x] **Schemas** (`cv_schemas.py`):
+  - [x] `CVVersionListItem` - Lightweight version list response
+  - [x] `CVVersionDetail` - Full version with all CV content
+  - [x] `CVVersionCreate` - Create named version request
+  - [x] `CVVersionRestore` - Restore response with version info
+
+### Frontend ✅
+- [x] **VersionHistory Component** (`VersionHistory.tsx`):
+  - [x] Slide-in panel from right side (like Google Docs)
+  - [x] Version list with version numbers, names, and timestamps
+  - [x] Relative time display ("2 hours ago", "Yesterday", etc.)
+  - [x] Version preview panel with content summary
+  - [x] Restore button with confirmation dialog
+  - [x] "Save Named Version" modal for manual checkpoints
+  - [x] Delete version functionality
+  - [x] Loading states and error handling
+  - [x] Professional UI with animations
+- [x] **Integration**:
+  - [x] "History" button in CV edit page top bar
+  - [x] Auto-refresh CV data after restore
+  - [x] Info footer explaining version behavior
+
+### Features
+- **Automatic Versioning**: Every save creates a version snapshot (like Google Docs)
+- **Named Versions**: Manually save important milestones with custom names
+- **Version Preview**: See content of any past version before restoring
+- **Safe Restore**: Current state is saved before restoring, allowing undo
+- **Version Cleanup**: Delete old versions you no longer need
+
+---
+
 ## ⏳ Phase 4: Export & Sharing (NOT STARTED)
 
 ### Backend ❌
@@ -270,18 +363,21 @@ ideal codebase/
 
 ---
 
-## 🚧 Phase 5: Advanced Features (NOT STARTED)
+## 🚧 Phase 5: Advanced Features (PARTIALLY COMPLETED)
+
+### Completed Features
+- [x] **Job Matching**: Match CVs with job descriptions and get AI suggestions ✅
+- [x] **Version History**: Google Docs-style version tracking with restore ✅
 
 ### Planned Features
 - [ ] **CV Scoring System**: ATS-friendly analysis and scoring
-- [ ] **Job Prediction**: Match CVs with job postings
+- [ ] **Job Board Integration**: Fetch and match with live job postings
 - [ ] **LinkedIn Integration**: Import profile data
-- [ ] **ATS Optimization**: Keyword analysis and suggestions
+- [ ] **Advanced ATS Optimization**: Deeper keyword analysis and formatting suggestions
 - [ ] **Real-time Collaboration**: WebSocket-based collaborative editing
 - [ ] Email verification
 - [ ] Password reset functionality
 - [ ] Profile settings
-- [ ] Multiple CV versions per user
 - [ ] Cover letter builder
 - [ ] Analytics (CV views, downloads)
 
@@ -289,8 +385,8 @@ ideal codebase/
 
 ## 🎯 Current Status
 
-**Last Updated:** January 30, 2026  
-**Current Phase:** Phase 3.6 - Advanced CV Customization completed ✅  
+**Last Updated:** January 31, 2026  
+**Current Phase:** Phase 3.8 - Version History (Google Docs Style) completed ✅  
 **Working Features:**
 - ✅ User authentication (register, login, protected routes)
 - ✅ AI-powered CV content generation (Azure OpenAI GPT-4o)
@@ -309,6 +405,16 @@ ideal codebase/
   - ✅ Photo upload placeholder
   - ✅ Tag-based skills management
   - ✅ Professional blue accent theme
+- ✅ **Job Match Advisor**:
+  - ✅ Paste job descriptions for AI analysis
+  - ✅ Get match score and tailored suggestions
+  - ✅ Skills recommendations and keyword optimization
+  - ✅ Integrated directly in CV editor
+- ✅ **Version History (Google Docs Style)**:
+  - ✅ Automatic versioning on every save
+  - ✅ Manual named version checkpoints
+  - ✅ Version preview and restore functionality
+  - ✅ Slide-in panel with professional UI
 
 **Next Priority:**
 1. **PDF Export** - Download CVs as PDF (WeasyPrint/pdfkit integration)
