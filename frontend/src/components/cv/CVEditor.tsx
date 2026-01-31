@@ -311,6 +311,42 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
+  // Convert projects to text and append to experience
+  const projectsText = data.projects
+    .filter(p => p.isVisible)
+    .map(p => {
+      const parts = [p.name];
+      if (p.startDate || p.endDate) parts.push(`(${p.startDate} - ${p.endDate})`);
+      if (p.technologies) parts.push(`| Technologies: ${p.technologies}`);
+      if (p.description) parts.push(`\n${p.description}`);
+      if (p.link) parts.push(`\nLink: ${p.link}`);
+      return parts.join(' ');
+    })
+    .join('\n\n');
+
+  // Convert research to text and append to experience
+  const researchText = data.research
+    .filter(r => r.isVisible)
+    .map(r => {
+      const parts = [r.title];
+      if (r.publisher) parts.push(`| ${r.publisher}`);
+      if (r.date) parts.push(`(${r.date})`);
+      if (r.authors) parts.push(`\nAuthors: ${r.authors}`);
+      if (r.description) parts.push(`\n${r.description}`);
+      if (r.link) parts.push(`\nLink: ${r.link}`);
+      return parts.join(' ');
+    })
+    .join('\n\n');
+
+  // Combine all work-related content
+  let combinedExperience = experienceText;
+  if (projectsText) {
+    combinedExperience += (combinedExperience ? '\n\n' : '') + `${data.sectionTitles.projects}:\n` + projectsText;
+  }
+  if (researchText) {
+    combinedExperience += (combinedExperience ? '\n\n' : '') + `${data.sectionTitles.research}:\n` + researchText;
+  }
+
   // Convert education entries to text
   const educationText = data.education
     .filter(e => e.isVisible)
@@ -335,7 +371,7 @@ export function convertToLegacyFormat(data: CVEditorData): {
     phone: data.personalInfo.phone,
     location: data.personalInfo.location,
     summary: data.summary,
-    experience: experienceText,
+    experience: combinedExperience,
     education: educationText,
     skills: skillsText,
   };
