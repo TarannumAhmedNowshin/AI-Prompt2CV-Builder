@@ -8,7 +8,8 @@ from ..utils.auth import get_current_user
 from ..services.ai_service import ai_service
 from .cv_schemas import (
     CVCreate, CVUpdate, CVResponse, 
-    AIPromptRequest, AIGeneratedContent
+    AIPromptRequest, AIGeneratedContent,
+    JobSuggestionRequest, JobSuggestionResponse
 )
 
 router = APIRouter(prefix="/api/cv", tags=["CV"])
@@ -152,3 +153,47 @@ async def delete_cv(
     db.delete(cv)
     db.commit()
     return None
+
+
+@router.post("/{cv_id}/job-suggestions", response_model=JobSuggestionResponse)
+async def get_job_suggestions(
+    cv_id: int,
+    request: JobSuggestionRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get AI-powered suggestions for tailoring a CV to a specific job description
+    """
+    # Fetch the CV
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
+    
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
+    
+    # Prepare CV data for AI analysis
+    cv_data = {
+        "full_name": cv.full_name or "",
+        "summary": cv.summary or "",
+        "experience": cv.experience or "",
+        "education": cv.education or "",
+        "skills": cv.skills or "",
+    }
+    
+    try:
+        suggestions = await ai_service.generate_job_suggestions(
+            cv_data=cv_data,
+            job_description=request.job_description
+        )
+        return suggestions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate suggestions: {str(e)}"
+        )

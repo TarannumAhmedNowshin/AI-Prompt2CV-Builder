@@ -148,6 +148,96 @@ class AIService:
                 "education": "",
             }
 
+    async def generate_job_suggestions(self, cv_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:
+        """
+        Analyze CV against a job description and provide tailored suggestions
+        
+        Args:
+            cv_data: The user's current CV data
+            job_description: The job description to match against
+            
+        Returns:
+            Dictionary with suggestions for improving the CV for this job
+        """
+        
+        # Initialize client if not already done
+        self._initialize_client()
+        
+        # Format CV data for the prompt
+        cv_summary = f"""
+        Name: {cv_data.get('full_name', 'Not provided')}
+        Summary: {cv_data.get('summary', 'Not provided')}
+        Experience: {cv_data.get('experience', 'Not provided')}
+        Education: {cv_data.get('education', 'Not provided')}
+        Skills: {cv_data.get('skills', 'Not provided')}
+        """
+        
+        system_prompt = """You are an expert career coach and CV/Resume consultant. Analyze the provided CV against the job description and provide actionable suggestions to help the candidate tailor their CV for this specific position.
+
+Return a JSON object with these fields:
+- match_score: A percentage (0-100) indicating how well the CV matches the job requirements
+- summary_suggestions: Specific suggestions to improve the professional summary for this job
+- skills_to_highlight: List of skills from the CV that should be emphasized for this job
+- skills_to_add: List of skills mentioned in the job description that the candidate should consider adding or developing
+- experience_suggestions: Suggestions for how to better present work experience for this role
+- keywords_to_include: Important keywords from the job description that should be incorporated into the CV
+- overall_recommendations: 3-5 bullet points with overall recommendations to improve chances for this position
+- strengths: What aspects of the CV align well with the job
+- gaps: Areas where the CV could be stronger for this specific role
+
+Be specific, actionable, and encouraging. Focus on realistic improvements the candidate can make."""
+
+        user_prompt = f"""
+## Current CV:
+{cv_summary}
+
+## Job Description:
+{job_description}
+
+Please analyze this CV against the job description and provide detailed suggestions for improvement.
+"""
+        
+        try:
+            response = self._client.chat.completions.create(
+                model=self._deployment,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                response_format={"type": "json_object"}
+            )
+            
+            content = response.choices[0].message.content
+            suggestions = json.loads(content)
+            
+            return {
+                "match_score": suggestions.get("match_score", 0),
+                "summary_suggestions": suggestions.get("summary_suggestions", ""),
+                "skills_to_highlight": suggestions.get("skills_to_highlight", []),
+                "skills_to_add": suggestions.get("skills_to_add", []),
+                "experience_suggestions": suggestions.get("experience_suggestions", ""),
+                "keywords_to_include": suggestions.get("keywords_to_include", []),
+                "overall_recommendations": suggestions.get("overall_recommendations", []),
+                "strengths": suggestions.get("strengths", ""),
+                "gaps": suggestions.get("gaps", ""),
+            }
+            
+        except Exception as e:
+            print(f"Error generating job suggestions: {e}")
+            return {
+                "match_score": 0,
+                "summary_suggestions": "Unable to generate suggestions. Please try again.",
+                "skills_to_highlight": [],
+                "skills_to_add": [],
+                "experience_suggestions": "",
+                "keywords_to_include": [],
+                "overall_recommendations": ["Please try again with a more detailed job description."],
+                "strengths": "",
+                "gaps": "",
+                "error": str(e)
+            }
+
 
 # Singleton instance
 ai_service = AIService()

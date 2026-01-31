@@ -9,6 +9,7 @@ import EducationSection, { EducationEntry } from './EducationSection';
 import ProjectsSection, { ProjectEntry } from './ProjectsSection';
 import SkillsSection, { Skill } from './SkillsSection';
 import ResearchSection, { ResearchEntry } from './ResearchSection';
+import JobSuggestions from './JobSuggestions';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -46,6 +47,7 @@ interface CVEditorProps {
   onChange: (data: CVEditorData) => void;
   onAIGenerate: (prompt: string) => Promise<void>;
   isGenerating?: boolean;
+  cvId?: string | number;
 }
 
 export default function CVEditor({
@@ -53,6 +55,7 @@ export default function CVEditor({
   onChange,
   onAIGenerate,
   isGenerating = false,
+  cvId,
 }: CVEditorProps) {
   const [aiPrompt, setAiPrompt] = useState('');
 
@@ -85,6 +88,9 @@ export default function CVEditor({
           </Button>
         </div>
       </Card>
+
+      {/* Job Match Advisor */}
+      {cvId && <JobSuggestions cvId={cvId} />}
 
       {/* CV Title */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">

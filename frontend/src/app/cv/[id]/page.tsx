@@ -329,6 +329,7 @@ export default function EditCVPage() {
               onChange={setCvData}
               onAIGenerate={handleAIGenerate}
               isGenerating={isGenerating}
+              cvId={cvId as string}
             />
           </div>
 

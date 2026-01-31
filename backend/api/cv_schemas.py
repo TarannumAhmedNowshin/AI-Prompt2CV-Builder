@@ -64,3 +64,21 @@ class AIGeneratedContent(BaseModel):
     experience: str
     education: str
     skills: str
+
+
+class JobSuggestionRequest(BaseModel):
+    """Request model for job description suggestions"""
+    job_description: str = Field(..., min_length=20, max_length=10000)
+
+
+class JobSuggestionResponse(BaseModel):
+    """Response model for job-tailored suggestions"""
+    match_score: int = Field(..., ge=0, le=100)
+    summary_suggestions: str
+    skills_to_highlight: list[str]
+    skills_to_add: list[str]
+    experience_suggestions: str
+    keywords_to_include: list[str]
+    overall_recommendations: list[str]
+    strengths: str
+    gaps: str
