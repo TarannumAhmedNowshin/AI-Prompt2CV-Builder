@@ -22,8 +22,8 @@ echo Setup complete!
 echo ====================================
 echo.
 echo Starting development server...
-echo Frontend will be available at: http://localhost:3000
-echo Make sure the backend is running at: http://localhost:8000
+echo Frontend will be available at: http://localhost:3001
+echo Make sure the backend is running at: http://localhost:8001
 echo.
 
 call npm run dev

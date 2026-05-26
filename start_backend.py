@@ -36,9 +36,9 @@ def start_server():
     """Start the FastAPI server"""
     print_header("Starting AI Prompt2CV Builder Backend")
     print("Server will be available at:")
-    print("  - API: http://localhost:8000")
-    print("  - Docs: http://localhost:8000/docs")
-    print("  - ReDoc: http://localhost:8000/redoc")
+    print("  - API: http://localhost:8001")
+    print("  - Docs: http://localhost:8001/docs")
+    print("  - ReDoc: http://localhost:8001/redoc")
     print("\nPress Ctrl+C to stop the server")
     print("="*50 + "\n")
     

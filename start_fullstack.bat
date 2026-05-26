@@ -4,8 +4,8 @@ echo AI Prompt2CV Builder - Full Stack Startup
 echo ====================================
 echo.
 echo This will start both backend and frontend servers
-echo Backend: http://localhost:8000
-echo Frontend: http://localhost:3000
+echo Backend: http://localhost:8001
+echo Frontend: http://localhost:3001
 echo.
 
 REM Start backend in a new window
@@ -19,8 +19,8 @@ start "Frontend Server" cmd /k "cd /d "%~dp0frontend" && npm run dev"
 
 echo.
 echo Both servers are starting...
-echo Backend: http://localhost:8000
-echo Frontend: http://localhost:3000
+echo Backend: http://localhost:8001
+echo Frontend: http://localhost:3001
 echo.
 echo Close this window or press any key to exit...
 pause >nul

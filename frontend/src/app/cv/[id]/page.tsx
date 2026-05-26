@@ -50,7 +50,7 @@ export default function EditCVPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/cv/${cvId}`, {
+      const response = await fetch(`http://localhost:8001/api/cv/${cvId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -102,7 +102,7 @@ export default function EditCVPage() {
         return;
       }
       
-      const response = await fetch('http://localhost:8000/api/cv/generate-content', {
+      const response = await fetch('http://localhost:8001/api/cv/generate-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ export default function EditCVPage() {
 
       const legacyData = convertToLegacyFormat(cvData);
       
-      const response = await fetch(`http://localhost:8000/api/cv/${cvId}`, {
+      const response = await fetch(`http://localhost:8001/api/cv/${cvId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

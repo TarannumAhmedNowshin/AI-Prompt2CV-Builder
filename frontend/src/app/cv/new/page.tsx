@@ -32,7 +32,7 @@ export default function NewCVPage() {
         return;
       }
       
-      const response = await fetch('http://localhost:8000/api/cv/generate-content', {
+      const response = await fetch('http://localhost:8001/api/cv/generate-content', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default function NewCVPage() {
 
       const legacyData = convertToLegacyFormat(cvData);
       
-      const response = await fetch('http://localhost:8000/api/cv/', {
+      const response = await fetch('http://localhost:8001/api/cv/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

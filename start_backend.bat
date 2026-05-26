@@ -24,8 +24,8 @@ echo.
 echo [3/3] Starting FastAPI server...
 echo.
 echo Server will be available at:
-echo   - API: http://localhost:8000
-echo   - Docs: http://localhost:8000/docs
+echo   - API: http://localhost:8001
+echo   - Docs: http://localhost:8001/docs
 echo.
 echo Press Ctrl+C to stop the server
 echo ============================================

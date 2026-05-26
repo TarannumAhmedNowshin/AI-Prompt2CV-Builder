@@ -48,7 +48,7 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
         return;
       }
 
-      const response = await fetch(`http://localhost:8000/api/cv/${cvId}/job-suggestions`, {
+      const response = await fetch(`http://localhost:8001/api/cv/${cvId}/job-suggestions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

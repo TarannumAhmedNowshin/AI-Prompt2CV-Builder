@@ -37,7 +37,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/api/cv/', {
+      const response = await fetch('http://localhost:8001/api/cv/', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -73,7 +73,7 @@ export default function DashboardPage() {
     try {
       const token = localStorage.getItem('access_token');
       
-      const response = await fetch(`http://localhost:8000/api/cv/${id}`, {
+      const response = await fetch(`http://localhost:8001/api/cv/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
