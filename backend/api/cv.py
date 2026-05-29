@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+import logging
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
+import json
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..database import get_db
 from ..models.user import User
 from ..models.cv import CV
@@ -18,17 +22,19 @@ from .cv_schemas import (
     CVReviewResponse
 )
 
-router = APIRouter(prefix="/api/cv", tags=["CV"])
+logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address)
+
+router = APIRouter(prefix="/api/cv", tags=["CV"])
 
 
 def create_version_snapshot(db: Session, cv: CV, user_id: int, change_summary: str = None, version_name: str = None) -> CVVersion:
     """Helper function to create a version snapshot of current CV state"""
-    # Get the next version number for this CV
     max_version = db.query(func.max(CVVersion.version_number)).filter(
         CVVersion.cv_id == cv.id
     ).scalar() or 0
-    
+
     version = CVVersion(
         cv_id=cv.id,
         version_number=max_version + 1,
@@ -53,8 +59,43 @@ def create_version_snapshot(db: Session, cv: CV, user_id: int, change_summary: s
     return version
 
 
+ALLOWED_EXTENSIONS = {'pdf', 'docx', 'doc', 'txt'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Magic bytes for file type validation
+FILE_SIGNATURES = {
+    'pdf': b'%PDF',
+    'docx': b'PK',
+    'doc': b'\xd0\xcf\x11\xe0',
+}
+
+
+def _validate_file_magic(content: bytes, extension: str) -> bool:
+    """Validate file content matches expected magic bytes for the claimed extension."""
+    if extension == 'txt':
+        try:
+            content[:1024].decode('utf-8')
+            return True
+        except (UnicodeDecodeError, ValueError):
+            return False
+    signature = FILE_SIGNATURES.get(extension)
+    if signature:
+        return content[:len(signature)] == signature
+    return True
+
+
+def _sanitize_filename(filename: str) -> str:
+    """Strip path separators and limit filename length."""
+    if not filename:
+        return "unknown"
+    name = filename.replace('\\', '/').split('/')[-1]
+    return name[:255]
+
+
 @router.post("/parse-document", response_model=DocumentParseResponse)
+@limiter.limit("10/minute")
 async def parse_document(
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
@@ -62,61 +103,65 @@ async def parse_document(
     Parse an uploaded document (PDF, DOCX, TXT) and extract CV information.
     Returns structured data that can be used to populate CV fields.
     """
-    # Validate file type
-    allowed_extensions = {'pdf', 'docx', 'doc', 'txt'}
-    file_ext = file.filename.lower().split('.')[-1] if file.filename else ''
-    
-    if file_ext not in allowed_extensions:
+    safe_filename = _sanitize_filename(file.filename)
+    file_ext = safe_filename.lower().rsplit('.', 1)[-1] if '.' in safe_filename else ''
+
+    if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type: {file_ext}. Allowed types: {', '.join(allowed_extensions)}"
+            detail=f"Unsupported file type. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
-    
-    # Check file size (max 10MB)
+
     content = await file.read()
-    if len(content) > 10 * 1024 * 1024:
+    if len(content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File too large. Maximum size is 10MB."
         )
-    
-    try:
-        # Parse the document with regex
-        parsed_data = document_parser.parse_document(content, file.filename)
 
-        # AI fallback: enhance with GPT if regex couldn't extract experience/education
+    if not _validate_file_magic(content, file_ext):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content does not match the expected format for the given extension."
+        )
+
+    try:
+        parsed_data = document_parser.parse_document(content, safe_filename)
         parsed_data = await document_parser.enhance_with_ai(parsed_data, document_parser.text)
 
         result = parsed_data.to_dict()
         result["ai_enhanced"] = parsed_data.confidence_scores.get("ai_enhanced", 0) == 1.0
         return DocumentParseResponse(**result)
-    except ImportError as e:
+    except ImportError:
+        logger.error("Missing dependency for document parsing")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Missing dependency: {str(e)}"
+            detail="A required library for document parsing is not installed."
         )
     except Exception as e:
+        logger.error("Document parsing failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to parse document: {str(e)}"
+            detail="Failed to parse the uploaded document. Please try a different file."
         )
 
 
 @router.post("/generate-content", response_model=AIGeneratedContent)
+@limiter.limit("5/minute")
 async def generate_cv_content(
-    request: AIPromptRequest,
+    request: Request,
+    prompt_request: AIPromptRequest,
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Generate CV content from AI prompt
-    """
+    """Generate CV content from AI prompt"""
     try:
-        cv_data = await ai_service.generate_cv_content(request.prompt)
+        cv_data = await ai_service.generate_cv_content(prompt_request.prompt)
         return cv_data
     except Exception as e:
+        logger.error("AI content generation failed: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate content: {str(e)}"
+            detail="Failed to generate CV content. Please try again."
         )
 
 
@@ -126,13 +171,8 @@ async def create_cv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Create a new CV for the current user
-    """
+    """Create a new CV for the current user"""
     try:
-        print(f"Creating CV for user {current_user.id}")
-        print(f"CV Data: title={cv_data.title}, template={cv_data.template}")
-        
         cv = CV(
             user_id=current_user.id,
             **cv_data.dict()
@@ -140,15 +180,14 @@ async def create_cv(
         db.add(cv)
         db.commit()
         db.refresh(cv)
-        
-        print(f"CV created successfully with ID: {cv.id}")
+        logger.info("CV %d created for user %d", cv.id, current_user.id)
         return cv
     except Exception as e:
-        print(f"Error creating CV: {e}")
+        logger.error("CV creation failed for user %d: %s", current_user.id, e)
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create CV: {str(e)}"
+            detail="Failed to create CV. Please try again."
         )
 
 
@@ -157,9 +196,7 @@ async def get_user_cvs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get all CVs for the current user
-    """
+    """Get all CVs for the current user"""
     cvs = db.query(CV).filter(CV.user_id == current_user.id).all()
     return cvs
 
@@ -170,20 +207,18 @@ async def get_cv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get a specific CV by ID
-    """
+    """Get a specific CV by ID"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
+
     return cv
 
 
@@ -194,32 +229,28 @@ async def update_cv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Update a CV (automatically creates a version snapshot before updating)
-    """
+    """Update a CV (automatically creates a version snapshot before updating)"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Create a version snapshot BEFORE updating (Google Docs style)
+
     create_version_snapshot(
         db=db,
         cv=cv,
         user_id=current_user.id,
         change_summary="Auto-saved before edit"
     )
-    
-    # Update only provided fields
+
     for field, value in cv_data.dict(exclude_unset=True).items():
         setattr(cv, field, value)
-    
+
     db.commit()
     db.refresh(cv)
     return cv
@@ -231,72 +262,76 @@ async def delete_cv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Delete a CV
-    """
+    """Delete a CV"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
+
     db.delete(cv)
     db.commit()
     return None
 
 
 @router.post("/{cv_id}/job-suggestions", response_model=JobSuggestionResponse)
+@limiter.limit("5/minute")
 async def get_job_suggestions(
     cv_id: int,
-    request: JobSuggestionRequest,
+    request: Request,
+    suggestion_request: JobSuggestionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get AI-powered suggestions for tailoring a CV to a specific job description
-    """
-    # Fetch the CV
+    """Get AI-powered suggestions for tailoring a CV to a specific job description"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Prepare CV data for AI analysis
+
+    def _format_for_ai(data):
+        if isinstance(data, list):
+            return json.dumps(data, indent=2)
+        return data or ""
+
     cv_data = {
         "full_name": cv.full_name or "",
         "summary": cv.summary or "",
-        "experience": cv.experience or "",
-        "education": cv.education or "",
-        "skills": cv.skills or "",
+        "experience": _format_for_ai(cv.experience),
+        "education": _format_for_ai(cv.education),
+        "skills": _format_for_ai(cv.skills),
     }
-    
+
     try:
         suggestions = await ai_service.generate_job_suggestions(
             cv_data=cv_data,
-            job_description=request.job_description
+            job_description=suggestion_request.job_description
         )
         return suggestions
     except Exception as e:
+        logger.error("Job suggestion generation failed for CV %d: %s", cv_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate suggestions: {str(e)}"
+            detail="Failed to generate job suggestions. Please try again."
         )
 
 
 @router.post("/{cv_id}/review", response_model=CVReviewResponse)
+@limiter.limit("5/minute")
 async def review_cv(
     cv_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -315,23 +350,29 @@ async def review_cv(
             detail="CV not found"
         )
 
+    def _format_for_ai(data):
+        if isinstance(data, list):
+            return json.dumps(data, indent=2)
+        return data or ""
+
     cv_data = {
         "full_name": cv.full_name or "",
         "summary": cv.summary or "",
-        "experience": cv.experience or "",
-        "education": cv.education or "",
-        "skills": cv.skills or "",
-        "projects": cv.projects or "",
-        "research": cv.research or "",
+        "experience": _format_for_ai(cv.experience),
+        "education": _format_for_ai(cv.education),
+        "skills": _format_for_ai(cv.skills),
+        "projects": _format_for_ai(cv.projects),
+        "research": _format_for_ai(cv.research),
     }
 
     try:
         review = await ai_service.review_cv(cv_data=cv_data)
         return review
     except Exception as e:
+        logger.error("CV review failed for CV %d: %s", cv_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to review CV: {str(e)}"
+            detail="Failed to review CV. Please try again."
         )
 
 
@@ -343,26 +384,22 @@ async def get_cv_versions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get all versions of a CV (version history like Google Docs)
-    """
-    # Verify CV ownership
+    """Get all versions of a CV (version history like Google Docs)"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Get all versions ordered by version number (newest first)
+
     versions = db.query(CVVersion).filter(
         CVVersion.cv_id == cv_id
     ).order_by(CVVersion.version_number.desc()).all()
-    
+
     return versions
 
 
@@ -373,33 +410,29 @@ async def get_cv_version(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Get a specific version of a CV with full content
-    """
-    # Verify CV ownership
+    """Get a specific version of a CV with full content"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Get the specific version
+
     version = db.query(CVVersion).filter(
         CVVersion.id == version_id,
         CVVersion.cv_id == cv_id
     ).first()
-    
+
     if not version:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Version not found"
         )
-    
+
     return version
 
 
@@ -410,21 +443,18 @@ async def create_named_version(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Manually create a named version (like "Save as new version" in Google Docs)
-    """
+    """Manually create a named version (like "Save as new version" in Google Docs)"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Create a new version with the provided name
+
     version = create_version_snapshot(
         db=db,
         cv=cv,
@@ -432,10 +462,10 @@ async def create_named_version(
         version_name=version_data.version_name,
         change_summary=version_data.change_summary or "Manual save"
     )
-    
+
     db.commit()
     db.refresh(version)
-    
+
     return version
 
 
@@ -446,42 +476,36 @@ async def restore_cv_version(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Restore a CV to a previous version (creates a new version with current state first)
-    """
-    # Verify CV ownership
+    """Restore a CV to a previous version (creates a new version with current state first)"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Get the version to restore
+
     version_to_restore = db.query(CVVersion).filter(
         CVVersion.id == version_id,
         CVVersion.cv_id == cv_id
     ).first()
-    
+
     if not version_to_restore:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Version not found"
         )
-    
-    # First, save current state as a version (so user can undo the restore)
+
     current_version = create_version_snapshot(
         db=db,
         cv=cv,
         user_id=current_user.id,
         change_summary=f"Before restoring to version {version_to_restore.version_number}"
     )
-    
-    # Now restore the CV to the selected version
+
     cv.title = version_to_restore.title
     cv.template = version_to_restore.template
     cv.full_name = version_to_restore.full_name
@@ -492,11 +516,13 @@ async def restore_cv_version(
     cv.experience = version_to_restore.experience
     cv.education = version_to_restore.education
     cv.skills = version_to_restore.skills
+    cv.projects = version_to_restore.projects
+    cv.research = version_to_restore.research
     cv.ai_prompt = version_to_restore.ai_prompt
-    
+
     db.commit()
     db.refresh(current_version)
-    
+
     return CVVersionRestore(
         message=f"Successfully restored to version {version_to_restore.version_number}",
         restored_version=version_to_restore.version_number,
@@ -511,34 +537,30 @@ async def delete_cv_version(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Delete a specific version (optional cleanup)
-    """
-    # Verify CV ownership
+    """Delete a specific version (optional cleanup)"""
     cv = db.query(CV).filter(
         CV.id == cv_id,
         CV.user_id == current_user.id
     ).first()
-    
+
     if not cv:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="CV not found"
         )
-    
-    # Get the version to delete
+
     version = db.query(CVVersion).filter(
         CVVersion.id == version_id,
         CVVersion.cv_id == cv_id
     ).first()
-    
+
     if not version:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Version not found"
         )
-    
+
     db.delete(version)
     db.commit()
-    
+
     return None

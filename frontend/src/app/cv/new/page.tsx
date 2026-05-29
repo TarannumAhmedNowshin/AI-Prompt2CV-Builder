@@ -5,11 +5,18 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat } from '@/components/cv/CVEditor';
+import CVEditor, { CVEditorData, createEmptyCVData } from '@/components/cv/CVEditor';
 import TemplateSelector, { TemplateType, getTemplateComponent } from '@/components/cv/TemplateSelector';
-import { Save, Download, ArrowLeft, Sparkles, PenLine } from 'lucide-react';
+import DocumentDropzone, { ParsedCVData } from '@/components/cv/DocumentDropzone';
+import ParsedDataPreview from '@/components/cv/ParsedDataPreview';
+import { Save, Download, ArrowLeft, Sparkles, PenLine, FileUp } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { mapCVDataToAPIRequest } from '@/lib/cv-data-mapper';
 import { mapAIResponseToCVData } from '@/lib/ai-content-mapper';
+import { Skill } from '@/components/cv/SkillsSection';
+import { ExperienceEntry } from '@/components/cv/ExperienceSection';
+import { EducationEntry } from '@/components/cv/EducationSection';
+import { ProjectEntry } from '@/components/cv/ProjectsSection';
 
 type PanelMode = 'edit' | 'ai';
 
@@ -22,6 +29,9 @@ export default function NewCVPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [panelMode, setPanelMode] = useState<PanelMode>('edit');
   const [aiPrompt, setAiPrompt] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedCVData | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const hasUnsavedData = useRef(false);
 
   useEffect(() => {
@@ -77,7 +87,6 @@ export default function NewCVPage() {
       setAiPrompt('');
       setPanelMode('edit');
     } catch (error) {
-      console.error('Error generating content:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate content. Please try again.');
     } finally {
       setIsGenerating(false);
@@ -105,7 +114,7 @@ export default function NewCVPage() {
         return;
       }
 
-      const legacyData = convertToLegacyFormat(cvData);
+      const apiData = mapCVDataToAPIRequest(cvData);
 
       const response = await fetch('http://localhost:8001/api/cv/', {
         method: 'POST',
@@ -114,7 +123,7 @@ export default function NewCVPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...legacyData,
+          ...apiData,
           template: selectedTemplate,
           ai_prompt: lastUsedPrompt || null,
         }),
@@ -128,11 +137,88 @@ export default function NewCVPage() {
       toast.success('CV saved successfully!');
       router.push('/dashboard');
     } catch (error) {
-      console.error('Error saving CV:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to save CV');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleDocumentParsed = (data: ParsedCVData) => {
+    setParsedData(data);
+    setShowPreview(true);
+    setShowImportModal(false);
+  };
+
+  const handleApplyParsedData = (selectedData: ParsedCVData) => {
+    const newSkills: Skill[] = selectedData.skills.map((skill, idx) => ({
+      id: `imported-skill-${Date.now()}-${idx}`,
+      name: skill.name,
+    }));
+
+    const newExperience: ExperienceEntry[] = selectedData.experience.map((exp, idx) => ({
+      id: `imported-exp-${Date.now()}-${idx}`,
+      jobTitle: exp.job_title,
+      employer: exp.employer,
+      location: exp.location,
+      startDate: exp.start_date,
+      endDate: exp.end_date,
+      description: exp.description,
+      isVisible: true,
+    }));
+
+    const newEducation: EducationEntry[] = selectedData.education.map((edu, idx) => ({
+      id: `imported-edu-${Date.now()}-${idx}`,
+      school: edu.school,
+      degree: edu.degree,
+      field: edu.field,
+      startDate: edu.start_date,
+      endDate: edu.end_date,
+      gpa: edu.gpa || '',
+      location: '',
+      description: edu.description,
+      isVisible: true,
+    }));
+
+    const newProjects: ProjectEntry[] = selectedData.projects.map((proj, idx) => ({
+      id: `imported-proj-${Date.now()}-${idx}`,
+      name: proj.name,
+      description: proj.description,
+      technologies: proj.technologies,
+      link: proj.link || '',
+      startDate: '',
+      endDate: '',
+      isVisible: true,
+    }));
+
+    const updatedData: CVEditorData = {
+      ...cvData,
+      personalInfo: {
+        fullName: selectedData.full_name || cvData.personalInfo.fullName,
+        email: selectedData.email || cvData.personalInfo.email,
+        phone: selectedData.phone || cvData.personalInfo.phone,
+        location: selectedData.location || cvData.personalInfo.location,
+        linkedin: selectedData.linkedin || cvData.personalInfo.linkedin,
+        website: cvData.personalInfo.website,
+        photo: cvData.personalInfo.photo,
+      },
+      summary: selectedData.summary || cvData.summary,
+      experience: newExperience.length > 0 ? newExperience : cvData.experience,
+      education: newEducation.length > 0 ? newEducation : cvData.education,
+      projects: newProjects.length > 0 ? newProjects : cvData.projects,
+      skills: [...cvData.skills, ...newSkills.filter(
+        ns => !cvData.skills.some(s => s.name.toLowerCase() === ns.name.toLowerCase())
+      )],
+    };
+
+    setCvData(updatedData);
+    setShowPreview(false);
+    setParsedData(null);
+    toast.success('Document data imported successfully!');
+  };
+
+  const handleCancelPreview = () => {
+    setShowPreview(false);
+    setParsedData(null);
   };
 
   const handleExport = () => {
@@ -185,6 +271,14 @@ export default function NewCVPage() {
                   <span>AI Tools</span>
                 </Button>
                 <div className="h-6 w-px bg-slate-200" />
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowImportModal(true)}
+                  title="Import document"
+                >
+                  <FileUp className="h-4 w-4" />
+                  <span>Import</span>
+                </Button>
                 <Button variant="outline" onClick={handleExport}>
                   <Download className="h-4 w-4" />
                   <span>Export</span>
@@ -264,6 +358,37 @@ export default function NewCVPage() {
             )}
           </div>
         </div>
+
+        {/* Import Document Modal */}
+        {showImportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md m-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">Import from Document</h2>
+                <button
+                  onClick={() => setShowImportModal(false)}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">
+                Upload your existing resume to auto-fill your CV
+              </p>
+              <DocumentDropzone onDataParsed={handleDocumentParsed} />
+            </div>
+          </div>
+        )}
+
+        {/* Parsed Data Preview Modal */}
+        {parsedData && (
+          <ParsedDataPreview
+            data={parsedData}
+            onApply={handleApplyParsedData}
+            onCancel={handleCancelPreview}
+            isOpen={showPreview}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

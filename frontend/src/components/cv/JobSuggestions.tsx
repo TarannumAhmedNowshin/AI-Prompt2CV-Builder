@@ -65,7 +65,6 @@ export default function JobSuggestions({ cvId, onClose }: JobSuggestionsProps) {
       const data = await response.json();
       setSuggestions(data);
     } catch (err) {
-      console.error('Error getting job suggestions:', err);
       setError(err instanceof Error ? err.message : 'Failed to get suggestions. Please try again.');
     } finally {
       setIsLoading(false);

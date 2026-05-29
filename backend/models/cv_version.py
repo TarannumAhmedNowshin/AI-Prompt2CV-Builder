@@ -24,11 +24,11 @@ class CVVersion(Base):
     phone = Column(String(50))
     location = Column(String(255))
     summary = Column(Text)
-    experience = Column(Text)
-    education = Column(Text)
-    skills = Column(Text)
-    projects = Column(Text)
-    research = Column(Text)
+    experience = Column(JSON)
+    education = Column(JSON)
+    skills = Column(JSON)
+    projects = Column(JSON)
+    research = Column(JSON)
     ai_prompt = Column(Text)
     
     # Timestamp when version was created

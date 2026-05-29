@@ -420,8 +420,8 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="text-sm font-medium text-slate-800">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
-                              <p className="text-xs text-slate-500">{edu.institution}</p>
+                              <p className="text-sm font-medium text-slate-800">{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
+                              <p className="text-xs text-slate-500">{edu.school}</p>
                               <p className="text-xs text-slate-400">{edu.start_date} — {edu.end_date}{edu.gpa ? ` | GPA: ${edu.gpa}` : ''}</p>
                             </div>
                             <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
@@ -474,7 +474,7 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <p className="text-sm font-medium text-slate-800">{proj.title}</p>
+                              <p className="text-sm font-medium text-slate-800">{proj.name}</p>
                               {proj.technologies && <p className="text-xs text-slate-500">{proj.technologies}</p>}
                             </div>
                             <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${

@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
+import json
 
 
 class AIPromptRequest(BaseModel):
@@ -8,21 +9,91 @@ class AIPromptRequest(BaseModel):
     prompt: str = Field(..., min_length=10, max_length=5000)
 
 
+# ============ Canonical Structured Item Models ============
+
+class ExperienceItem(BaseModel):
+    job_title: str = Field("", max_length=200)
+    employer: str = Field("", max_length=200)
+    location: str = Field("", max_length=200)
+    start_date: str = Field("", max_length=20)
+    end_date: str = Field("", max_length=20)
+    description: str = Field("", max_length=5000)
+    link: str = Field("", max_length=500)
+    is_visible: bool = True
+
+
+class EducationItem(BaseModel):
+    school: str = Field("", max_length=200)
+    degree: str = Field("", max_length=200)
+    field: str = Field("", max_length=200)
+    start_date: str = Field("", max_length=20)
+    end_date: str = Field("", max_length=20)
+    location: str = Field("", max_length=200)
+    description: str = Field("", max_length=3000)
+    gpa: str = Field("", max_length=20)
+    link: str = Field("", max_length=500)
+    is_visible: bool = True
+
+
+class SkillItem(BaseModel):
+    name: str = Field("", max_length=100)
+    level: str = Field("", max_length=20)
+
+
+class ProjectItem(BaseModel):
+    name: str = Field("", max_length=200)
+    description: str = Field("", max_length=3000)
+    technologies: str = Field("", max_length=500)
+    start_date: str = Field("", max_length=20)
+    end_date: str = Field("", max_length=20)
+    link: str = Field("", max_length=500)
+    is_visible: bool = True
+
+
+class ResearchItem(BaseModel):
+    title: str = Field("", max_length=300)
+    publisher: str = Field("", max_length=200)
+    authors: str = Field("", max_length=500)
+    date: str = Field("", max_length=20)
+    description: str = Field("", max_length=3000)
+    link: str = Field("", max_length=500)
+    is_visible: bool = True
+
+
+# ============ CV Schemas ============
+
+def _parse_legacy_text(v):
+    """Convert legacy TEXT strings to empty list for backward compatibility"""
+    if v is None:
+        return None
+    if isinstance(v, str):
+        if not v.strip():
+            return None
+        try:
+            parsed = json.loads(v)
+            if isinstance(parsed, list):
+                return parsed
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return []
+    return v
+
+
 class CVBase(BaseModel):
     """Base CV schema"""
     title: str = Field(..., min_length=1, max_length=255)
     template: str = Field(..., pattern="^(modern|classic|executive|minimal)$")
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    location: Optional[str] = None
-    summary: Optional[str] = None
-    experience: Optional[str] = None
-    education: Optional[str] = None
-    skills: Optional[str] = None
-    projects: Optional[str] = None
-    research: Optional[str] = None
-    ai_prompt: Optional[str] = None
+    full_name: Optional[str] = Field(None, max_length=200)
+    email: Optional[str] = Field(None, max_length=254)
+    phone: Optional[str] = Field(None, max_length=30)
+    location: Optional[str] = Field(None, max_length=200)
+    summary: Optional[str] = Field(None, max_length=5000)
+    experience: Optional[list[ExperienceItem]] = None
+    education: Optional[list[EducationItem]] = None
+    skills: Optional[list[SkillItem]] = None
+    projects: Optional[list[ProjectItem]] = None
+    research: Optional[list[ResearchItem]] = None
+    ai_prompt: Optional[str] = Field(None, max_length=5000)
 
 
 class CVCreate(CVBase):
@@ -34,17 +105,17 @@ class CVUpdate(BaseModel):
     """Schema for updating a CV"""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     template: Optional[str] = Field(None, pattern="^(modern|classic|executive|minimal)$")
-    full_name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    location: Optional[str] = None
-    summary: Optional[str] = None
-    experience: Optional[str] = None
-    education: Optional[str] = None
-    skills: Optional[str] = None
-    projects: Optional[str] = None
-    research: Optional[str] = None
-    ai_prompt: Optional[str] = None
+    full_name: Optional[str] = Field(None, max_length=200)
+    email: Optional[str] = Field(None, max_length=254)
+    phone: Optional[str] = Field(None, max_length=30)
+    location: Optional[str] = Field(None, max_length=200)
+    summary: Optional[str] = Field(None, max_length=5000)
+    experience: Optional[list[ExperienceItem]] = None
+    education: Optional[list[EducationItem]] = None
+    skills: Optional[list[SkillItem]] = None
+    projects: Optional[list[ProjectItem]] = None
+    research: Optional[list[ResearchItem]] = None
+    ai_prompt: Optional[str] = Field(None, max_length=5000)
 
 
 class CVResponse(CVBase):
@@ -53,52 +124,14 @@ class CVResponse(CVBase):
     user_id: int
     created_at: datetime
     updated_at: datetime
-    
+
+    @field_validator('experience', 'education', 'skills', 'projects', 'research', mode='before')
+    @classmethod
+    def handle_legacy_text(cls, v):
+        return _parse_legacy_text(v)
+
     class Config:
         from_attributes = True
-
-
-class AIExperienceItem(BaseModel):
-    job_title: str = ""
-    employer: str = ""
-    location: str = ""
-    start_date: str = ""
-    end_date: str = ""
-    description: str = ""
-
-
-class AIEducationItem(BaseModel):
-    school: str = ""
-    degree: str = ""
-    field: str = ""
-    start_date: str = ""
-    end_date: str = ""
-    location: str = ""
-    description: str = ""
-    gpa: str = ""
-
-
-class AIProjectItem(BaseModel):
-    name: str = ""
-    description: str = ""
-    technologies: str = ""
-    start_date: str = ""
-    end_date: str = ""
-    link: str = ""
-
-
-class AIResearchItem(BaseModel):
-    title: str = ""
-    publisher: str = ""
-    authors: str = ""
-    date: str = ""
-    description: str = ""
-    link: str = ""
-
-
-class AISkillItem(BaseModel):
-    name: str = ""
-    level: str = ""
 
 
 class AIGeneratedContent(BaseModel):
@@ -108,11 +141,11 @@ class AIGeneratedContent(BaseModel):
     phone: str = ""
     location: str = ""
     summary: str = ""
-    experience: list[AIExperienceItem] = []
-    education: list[AIEducationItem] = []
-    skills: list[AISkillItem] = []
-    projects: list[AIProjectItem] = []
-    research: list[AIResearchItem] = []
+    experience: list[ExperienceItem] = []
+    education: list[EducationItem] = []
+    skills: list[SkillItem] = []
+    projects: list[ProjectItem] = []
+    research: list[ResearchItem] = []
 
 
 class JobSuggestionRequest(BaseModel):
@@ -141,7 +174,7 @@ class CVVersionBase(BaseModel):
     version_name: Optional[str] = None
     change_summary: Optional[str] = None
     created_at: datetime
-    
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat() if v else None
@@ -151,7 +184,7 @@ class CVVersionBase(BaseModel):
 class CVVersionListItem(CVVersionBase):
     """Schema for version list item (lightweight)"""
     id: int
-    
+
     class Config:
         from_attributes = True
         json_encoders = {
@@ -170,11 +203,18 @@ class CVVersionDetail(CVVersionBase):
     phone: Optional[str] = None
     location: Optional[str] = None
     summary: Optional[str] = None
-    experience: Optional[str] = None
-    education: Optional[str] = None
-    skills: Optional[str] = None
+    experience: Optional[list[ExperienceItem]] = None
+    education: Optional[list[EducationItem]] = None
+    skills: Optional[list[SkillItem]] = None
+    projects: Optional[list[ProjectItem]] = None
+    research: Optional[list[ResearchItem]] = None
     ai_prompt: Optional[str] = None
-    
+
+    @field_validator('experience', 'education', 'skills', 'projects', 'research', mode='before')
+    @classmethod
+    def handle_legacy_text(cls, v):
+        return _parse_legacy_text(v)
+
     class Config:
         from_attributes = True
         json_encoders = {
@@ -199,9 +239,9 @@ class CVVersionRestore(BaseModel):
 
 class ParsedEducationItem(BaseModel):
     """Parsed education entry"""
-    institution: str = ""
+    school: str = ""
     degree: str = ""
-    field_of_study: str = ""
+    field: str = ""
     start_date: str = ""
     end_date: str = ""
     gpa: str = ""
@@ -220,7 +260,7 @@ class ParsedExperienceItem(BaseModel):
 
 class ParsedProjectItem(BaseModel):
     """Parsed project entry"""
-    title: str = ""
+    name: str = ""
     technologies: str = ""
     description: str = ""
     link: str = ""

@@ -50,7 +50,6 @@ export default function DashboardPage() {
       const data = await response.json();
       setCvs(data);
     } catch (error) {
-      console.error('Error fetching CVs:', error);
       toast.error('Failed to load CVs');
     } finally {
       setIsLoading(false);
@@ -87,7 +86,6 @@ export default function DashboardPage() {
       setCvs(cvs.filter(cv => cv.id !== id));
       toast.success('CV deleted successfully');
     } catch (error) {
-      console.error('Error deleting CV:', error);
       toast.error('Failed to delete CV');
     }
   };

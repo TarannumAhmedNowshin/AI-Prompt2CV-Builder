@@ -6,6 +6,7 @@ Focused on reliable extraction: name, email, phone, location, skills
 
 import re
 import io
+import logging
 from typing import Dict, List, Any
 from dataclasses import dataclass, field
 
@@ -425,7 +426,7 @@ class DocumentParser:
         try:
             ai_result = await ai_service.parse_document_with_ai(raw_text)
         except Exception as e:
-            print(f"AI document enhancement failed: {e}")
+            logging.getLogger(__name__).warning("AI document enhancement failed: %s", type(e).__name__)
             return parsed_data
 
         if not ai_result:

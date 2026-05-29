@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
         } catch (error) {
-          console.error('Failed to get current user:', error);
           authService.clearTokens();
         }
       }
@@ -54,8 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Login successful!');
       router.push('/dashboard');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Login failed. Please check your credentials.';
-      toast.error(errorMessage);
+      toast.error('Login failed. Please check your credentials.');
       throw error;
     }
   };
@@ -66,8 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Registration successful! Please login.');
       router.push('/login');
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Registration failed. Please try again.';
-      toast.error(errorMessage);
+      toast.error('Registration failed. Please try again.');
       throw error;
     }
   };
@@ -79,8 +76,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Logged out successfully');
       router.push('/login');
     } catch (error) {
-      console.error('Logout error:', error);
-      // Clear tokens anyway
       authService.clearTokens();
       setUser(null);
       router.push('/login');

@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import CVEditor, { CVEditorData, createEmptyCVData, convertToLegacyFormat, convertLegacyCVData } from '@/components/cv/CVEditor';
+import CVEditor, { CVEditorData, createEmptyCVData } from '@/components/cv/CVEditor';
 import VersionHistory from '@/components/cv/VersionHistory';
 import DocumentDropzone, { ParsedCVData } from '@/components/cv/DocumentDropzone';
 import ParsedDataPreview from '@/components/cv/ParsedDataPreview';
@@ -19,6 +19,7 @@ import { Skill } from '@/components/cv/SkillsSection';
 import { ExperienceEntry } from '@/components/cv/ExperienceSection';
 import { EducationEntry } from '@/components/cv/EducationSection';
 import { ProjectEntry } from '@/components/cv/ProjectsSection';
+import { mapAPIResponseToCVData, mapCVDataToAPIRequest } from '@/lib/cv-data-mapper';
 import { mapAIResponseToCVData } from '@/lib/ai-content-mapper';
 
 type PanelMode = 'edit' | 'ai';
@@ -66,7 +67,7 @@ export default function EditCVPage() {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const legacyData = convertToLegacyFormat(data);
+      const apiData = mapCVDataToAPIRequest(data);
       const response = await fetch(`http://localhost:8001/api/cv/${cvId}`, {
         method: 'PUT',
         headers: {
@@ -74,7 +75,7 @@ export default function EditCVPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...legacyData,
+          ...apiData,
           template,
           ai_prompt: prompt || null,
         }),
@@ -140,25 +141,12 @@ export default function EditCVPage() {
 
       const data = await response.json();
 
-      const convertedData = convertLegacyCVData({
-        title: data.title || '',
-        fullName: data.full_name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        location: data.location || '',
-        summary: data.summary || '',
-        experience: data.experience || '',
-        education: data.education || '',
-        skills: data.skills || '',
-        projects: data.projects || '',
-        research: data.research || '',
-      });
+      const convertedData = mapAPIResponseToCVData(data);
 
       setCvData(convertedData);
       setSelectedTemplate(data.template as TemplateType);
       setLastUsedPrompt(data.ai_prompt || '');
     } catch (error) {
-      console.error('Error fetching CV:', error);
       toast.error('Failed to load CV');
       router.push('/dashboard');
     } finally {
@@ -204,7 +192,6 @@ export default function EditCVPage() {
       setAiPrompt('');
       setPanelMode('edit');
     } catch (error) {
-      console.error('Error generating content:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to generate content. Please try again.');
     } finally {
       setIsGenerating(false);
@@ -232,7 +219,7 @@ export default function EditCVPage() {
         return;
       }
 
-      const legacyData = convertToLegacyFormat(cvData);
+      const apiData = mapCVDataToAPIRequest(cvData);
 
       const response = await fetch(`http://localhost:8001/api/cv/${cvId}`, {
         method: 'PUT',
@@ -241,7 +228,7 @@ export default function EditCVPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...legacyData,
+          ...apiData,
           template: selectedTemplate,
           ai_prompt: lastUsedPrompt || null,
         }),
@@ -254,7 +241,6 @@ export default function EditCVPage() {
 
       toast.success('CV updated successfully!');
     } catch (error) {
-      console.error('Error updating CV:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to update CV');
     } finally {
       setIsSaving(false);
@@ -284,7 +270,6 @@ export default function EditCVPage() {
       cleanup();
       toast.success('PDF exported successfully!', { id: loadingToast });
     } catch (error) {
-      console.error('Error exporting PDF:', error);
       toast.error(
         error instanceof Error ? error.message : 'Failed to export PDF',
         { id: loadingToast }
@@ -317,9 +302,9 @@ export default function EditCVPage() {
 
     const newEducation: EducationEntry[] = selectedData.education.map((edu, idx) => ({
       id: `imported-edu-${Date.now()}-${idx}`,
-      school: edu.institution,
+      school: edu.school,
       degree: edu.degree,
-      field: edu.field_of_study,
+      field: edu.field,
       startDate: edu.start_date,
       endDate: edu.end_date,
       gpa: edu.gpa || '',
@@ -330,7 +315,7 @@ export default function EditCVPage() {
 
     const newProjects: ProjectEntry[] = selectedData.projects.map((proj, idx) => ({
       id: `imported-proj-${Date.now()}-${idx}`,
-      name: proj.title,
+      name: proj.name,
       description: proj.description,
       technologies: proj.technologies,
       link: proj.link || '',
@@ -463,21 +448,23 @@ export default function EditCVPage() {
                   <Download className="h-4 w-4" />
                   <span>Export</span>
                 </Button>
-                {saveStatus === 'saving' && (
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Saving...
-                  </span>
-                )}
-                {saveStatus === 'saved' && (
-                  <span className="flex items-center gap-1.5 text-xs text-green-600">
-                    <Check className="h-3.5 w-3.5" />
-                    Saved
-                  </span>
-                )}
-                <Button onClick={handleUpdate} isLoading={isSaving}>
-                  <Save className="h-4 w-4" />
-                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                <Button onClick={handleUpdate} isLoading={isSaving || saveStatus === 'saving'}>
+                  {saveStatus === 'saved' ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      <span>Saved</span>
+                    </>
+                  ) : (isSaving || saveStatus === 'saving') ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      <span>Save</span>
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

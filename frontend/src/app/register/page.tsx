@@ -66,7 +66,6 @@ export default function RegisterPage() {
         password: formData.password,
       });
     } catch (error) {
-      console.error('Registration error:', error);
     } finally {
       setIsLoading(false);
     }

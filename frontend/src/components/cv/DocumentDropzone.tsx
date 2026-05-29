@@ -15,9 +15,9 @@ export interface ParsedExperience {
 }
 
 export interface ParsedEducation {
-  institution: string;
+  school: string;
   degree: string;
-  field_of_study: string;
+  field: string;
   start_date: string;
   end_date: string;
   gpa: string;
@@ -30,7 +30,7 @@ export interface ParsedSkill {
 }
 
 export interface ParsedProject {
-  title: string;
+  name: string;
   technologies: string;
   description: string;
   link: string;
@@ -115,7 +115,6 @@ export default function DocumentDropzone({ onDataParsed, disabled = false }: Doc
       setUploadStatus('success');
       onDataParsed(parsedData);
     } catch (error: any) {
-      console.error('Upload error:', error);
       setUploadStatus('error');
       setErrorMessage(
         error.response?.data?.detail || 

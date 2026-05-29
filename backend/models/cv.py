@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..database import Base
@@ -21,11 +21,11 @@ class CV(Base):
     
     # CV Content
     summary = Column(Text)
-    experience = Column(Text)
-    education = Column(Text)
-    skills = Column(Text)
-    projects = Column(Text)
-    research = Column(Text)
+    experience = Column(JSON)
+    education = Column(JSON)
+    skills = Column(JSON)
+    projects = Column(JSON)
+    research = Column(JSON)
     
     # AI Prompt (stored for reference)
     ai_prompt = Column(Text)

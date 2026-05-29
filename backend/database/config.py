@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # Application
     APP_NAME: str = "AI Prompt2CV Builder API"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
     
     # CORS - Will be parsed as string and split by comma
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"

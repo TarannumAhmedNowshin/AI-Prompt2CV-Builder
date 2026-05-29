@@ -14,6 +14,38 @@ interface CVVersion {
   created_at: string;
 }
 
+interface APISkillItem {
+  name: string;
+  level?: string;
+}
+
+interface APIExperienceItem {
+  job_title: string;
+  employer: string;
+  start_date: string;
+  end_date: string;
+}
+
+interface APIEducationItem {
+  school: string;
+  degree: string;
+  field: string;
+  start_date: string;
+  end_date: string;
+}
+
+interface APIProjectItem {
+  name: string;
+  description: string;
+  technologies?: string;
+}
+
+interface APIResearchItem {
+  title: string;
+  publisher?: string;
+  date: string;
+}
+
 interface CVVersionDetail extends CVVersion {
   cv_id: number;
   title: string;
@@ -23,9 +55,11 @@ interface CVVersionDetail extends CVVersion {
   phone: string | null;
   location: string | null;
   summary: string | null;
-  experience: string | null;
-  education: string | null;
-  skills: string | null;
+  experience: APIExperienceItem[] | null;
+  education: APIEducationItem[] | null;
+  skills: APISkillItem[] | null;
+  projects: APIProjectItem[] | null;
+  research: APIResearchItem[] | null;
   ai_prompt: string | null;
 }
 
@@ -58,7 +92,6 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
       const response = await apiClient.get(`/api/cv/${cvId}/versions`);
       setVersions(response.data);
     } catch (error) {
-      console.error('Error fetching versions:', error);
       toast.error('Failed to load version history');
     } finally {
       setIsLoading(false);
@@ -70,7 +103,6 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
       const response = await apiClient.get(`/api/cv/${cvId}/versions/${versionId}`);
       setSelectedVersion(response.data);
     } catch (error) {
-      console.error('Error fetching version detail:', error);
       toast.error('Failed to load version details');
     }
   };
@@ -87,7 +119,6 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
       onRestore(); // Refresh the CV data
       onClose();
     } catch (error) {
-      console.error('Error restoring version:', error);
       toast.error('Failed to restore version');
     } finally {
       setIsRestoring(false);
@@ -108,7 +139,6 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
         setSelectedVersion(null);
       }
     } catch (error) {
-      console.error('Error deleting version:', error);
       toast.error('Failed to delete version');
     }
   };
@@ -126,7 +156,6 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
       setChangeSummary('');
       fetchVersions();
     } catch (error) {
-      console.error('Error saving version:', error);
       toast.error('Failed to save version');
     } finally {
       setIsSavingVersion(false);
@@ -353,23 +382,86 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
                       </div>
                     )}
                     
-                    {selectedVersion.skills && (
+                    {selectedVersion.experience && selectedVersion.experience.length > 0 && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Experience</label>
+                        <div className="space-y-2">
+                          {selectedVersion.experience.map((exp, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <p className="text-sm font-medium text-gray-900">{exp.job_title}</p>
+                              {exp.employer && <p className="text-sm text-gray-600">{exp.employer}</p>}
+                              {(exp.start_date || exp.end_date) && (
+                                <p className="text-xs text-gray-500 mt-1">{exp.start_date}{exp.end_date ? ` – ${exp.end_date}` : ''}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedVersion.education && selectedVersion.education.length > 0 && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Education</label>
+                        <div className="space-y-2">
+                          {selectedVersion.education.map((edu, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <p className="text-sm font-medium text-gray-900">{edu.degree}{edu.field ? ` in ${edu.field}` : ''}</p>
+                              {edu.school && <p className="text-sm text-gray-600">{edu.school}</p>}
+                              {(edu.start_date || edu.end_date) && (
+                                <p className="text-xs text-gray-500 mt-1">{edu.start_date}{edu.end_date ? ` – ${edu.end_date}` : ''}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedVersion.skills && selectedVersion.skills.length > 0 && (
                       <div className="pt-3 border-t border-gray-100">
                         <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Skills</label>
                         <div className="flex flex-wrap gap-2">
-                          {selectedVersion.skills.split(',').slice(0, 8).map((skill, idx) => (
+                          {selectedVersion.skills.slice(0, 8).map((skill, idx) => (
                             <span
                               key={idx}
                               className="px-3 py-1.5 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg text-sm font-medium border border-blue-200"
                             >
-                              {skill.trim()}
+                              {skill.name}{skill.level ? ` (${skill.level})` : ''}
                             </span>
                           ))}
-                          {selectedVersion.skills.split(',').length > 8 && (
+                          {selectedVersion.skills.length > 8 && (
                             <span className="px-3 py-1.5 text-gray-600 text-sm font-medium">
-                              +{selectedVersion.skills.split(',').length - 8} more
+                              +{selectedVersion.skills.length - 8} more
                             </span>
                           )}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedVersion.projects && selectedVersion.projects.length > 0 && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Projects</label>
+                        <div className="space-y-2">
+                          {selectedVersion.projects.map((proj, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <p className="text-sm font-medium text-gray-900">{proj.name}</p>
+                              {proj.technologies && <p className="text-xs text-gray-500 mt-1">{proj.technologies}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedVersion.research && selectedVersion.research.length > 0 && (
+                      <div className="pt-3 border-t border-gray-100">
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Research</label>
+                        <div className="space-y-2">
+                          {selectedVersion.research.map((res, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                              <p className="text-sm font-medium text-gray-900">{res.title}</p>
+                              {res.publisher && <p className="text-sm text-gray-600">{res.publisher}</p>}
+                              {res.date && <p className="text-xs text-gray-500 mt-1">{res.date}</p>}
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

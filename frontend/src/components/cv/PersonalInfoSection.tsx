@@ -30,7 +30,6 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
 
   const handlePhotoUpload = () => {
     // TODO: Implement photo upload
-    console.log('Photo upload clicked');
   };
 
   return (

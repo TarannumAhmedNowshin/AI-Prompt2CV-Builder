@@ -78,7 +78,6 @@ export default function CVReviewer({ cvId }: CVReviewerProps) {
       const data = await response.json();
       setReview(data);
     } catch (err) {
-      console.error('Error reviewing CV:', err);
       setError(err instanceof Error ? err.message : 'Failed to review CV. Please try again.');
     } finally {
       setIsLoading(false);

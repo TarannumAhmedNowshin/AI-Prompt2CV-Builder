@@ -25,7 +25,6 @@ export default function LoginPage() {
     try {
       await login(credentials);
     } catch (error) {
-      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
