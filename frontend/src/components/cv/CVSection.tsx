@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, ReactNode } from 'react';
-import { ChevronDown, ChevronUp, Pencil, Plus, GripVertical, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Pencil, Plus, GripVertical, Eye, EyeOff, Trash2, X } from 'lucide-react';
 
 interface CVSectionProps {
   icon: ReactNode;
@@ -232,8 +232,22 @@ export function HeadingEditModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { onChange(localValue); onClose(); }}
+              className="px-4 py-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         <div className="px-6 py-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -245,23 +259,6 @@ export function HeadingEditModal({
             onChange={(e) => setLocalValue(e.target.value)}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
-        </div>
-        <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              onChange(localValue);
-              onClose();
-            }}
-            className="flex-1 py-2.5 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-800 transition-colors"
-          >
-            Save
-          </button>
         </div>
       </div>
     </div>

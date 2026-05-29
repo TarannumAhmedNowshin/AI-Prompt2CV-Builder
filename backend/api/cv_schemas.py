@@ -11,7 +11,7 @@ class AIPromptRequest(BaseModel):
 class CVBase(BaseModel):
     """Base CV schema"""
     title: str = Field(..., min_length=1, max_length=255)
-    template: str = Field(..., pattern="^(modern|classic)$")
+    template: str = Field(..., pattern="^(modern|classic|executive|minimal)$")
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -33,7 +33,7 @@ class CVCreate(CVBase):
 class CVUpdate(BaseModel):
     """Schema for updating a CV"""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
-    template: Optional[str] = Field(None, pattern="^(modern|classic)$")
+    template: Optional[str] = Field(None, pattern="^(modern|classic|executive|minimal)$")
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
@@ -58,16 +58,61 @@ class CVResponse(CVBase):
         from_attributes = True
 
 
+class AIExperienceItem(BaseModel):
+    job_title: str = ""
+    employer: str = ""
+    location: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    description: str = ""
+
+
+class AIEducationItem(BaseModel):
+    school: str = ""
+    degree: str = ""
+    field: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    location: str = ""
+    description: str = ""
+    gpa: str = ""
+
+
+class AIProjectItem(BaseModel):
+    name: str = ""
+    description: str = ""
+    technologies: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    link: str = ""
+
+
+class AIResearchItem(BaseModel):
+    title: str = ""
+    publisher: str = ""
+    authors: str = ""
+    date: str = ""
+    description: str = ""
+    link: str = ""
+
+
+class AISkillItem(BaseModel):
+    name: str = ""
+    level: str = ""
+
+
 class AIGeneratedContent(BaseModel):
     """Response model for AI-generated content"""
-    full_name: str
-    email: str
-    phone: str
-    location: str
-    summary: str
-    experience: str
-    education: str
-    skills: str
+    full_name: str = ""
+    email: str = ""
+    phone: str = ""
+    location: str = ""
+    summary: str = ""
+    experience: list[AIExperienceItem] = []
+    education: list[AIEducationItem] = []
+    skills: list[AISkillItem] = []
+    projects: list[AIProjectItem] = []
+    research: list[AIResearchItem] = []
 
 
 class JobSuggestionRequest(BaseModel):

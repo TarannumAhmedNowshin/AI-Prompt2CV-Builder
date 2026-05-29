@@ -96,19 +96,70 @@ class AIService:
         self._initialize_client()
         
         system_prompt = """You are an expert CV/Resume writer. Extract and structure CV information from the user's description.
-        
-        Return a JSON object with these fields:
-        - full_name: Extract if mentioned
-        - email: Extract if mentioned
-        - phone: Extract if mentioned
-        - location: Extract if mentioned
-        - summary: Write a professional 2-3 sentence summary
-        - experience: List work experiences (each on a new line with format: "Job Title at Company (Year-Year) - Description")
-        - education: List education (each on a new line with format: "Degree in Field, Institution (Year)")
-        - skills: Comma-separated list of skills
-        
-        If information is not provided, return empty string for that field.
-        Keep the tone professional and concise."""
+
+Return a JSON object with exactly this structure:
+{
+  "full_name": "string or empty string",
+  "email": "string or empty string",
+  "phone": "string or empty string",
+  "location": "string or empty string",
+  "summary": "A professional 2-3 sentence summary",
+  "experience": [
+    {
+      "job_title": "string",
+      "employer": "string",
+      "location": "string",
+      "start_date": "MM/YYYY or YYYY",
+      "end_date": "MM/YYYY or YYYY or Present",
+      "description": "bullet-point achievements, each on a new line starting with a dash"
+    }
+  ],
+  "education": [
+    {
+      "school": "institution name",
+      "degree": "e.g. Bachelor of Science",
+      "field": "e.g. Computer Science",
+      "start_date": "MM/YYYY or YYYY",
+      "end_date": "MM/YYYY or YYYY",
+      "location": "string",
+      "description": "relevant coursework, honors, etc.",
+      "gpa": "e.g. 3.8/4.0 or empty string"
+    }
+  ],
+  "skills": [
+    {
+      "name": "skill name",
+      "level": "beginner or intermediate or advanced or expert or empty string"
+    }
+  ],
+  "projects": [
+    {
+      "name": "project name",
+      "description": "what the project does and your role",
+      "technologies": "comma-separated technologies used",
+      "start_date": "MM/YYYY or YYYY or empty string",
+      "end_date": "MM/YYYY or YYYY or empty string",
+      "link": "URL or empty string"
+    }
+  ],
+  "research": [
+    {
+      "title": "publication or research title",
+      "publisher": "journal, conference, or publisher name",
+      "authors": "comma-separated author names",
+      "date": "MM/YYYY or YYYY",
+      "description": "brief description of the research",
+      "link": "DOI or URL or empty string"
+    }
+  ]
+}
+
+Rules:
+- Return arrays even if there is only one item. Return empty arrays [] if a section has no data.
+- For fields not mentioned by the user, return empty string "".
+- Write professional, concise descriptions. Use action verbs for experience descriptions.
+- If the user mentions projects or research/publications, populate those arrays.
+- Keep the tone professional throughout."""
         
         try:
             response = self._client.chat.completions.create(
@@ -117,35 +168,39 @@ class AIService:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.7,
+                temperature=0.4,
                 response_format={"type": "json_object"}
             )
-            
+
             content = response.choices[0].message.content
             cv_data = json.loads(content)
-            
+
             return {
                 "full_name": cv_data.get("full_name", ""),
                 "email": cv_data.get("email", ""),
                 "phone": cv_data.get("phone", ""),
                 "location": cv_data.get("location", ""),
                 "summary": cv_data.get("summary", ""),
-                "experience": cv_data.get("experience", ""),
-                "education": cv_data.get("education", ""),
-                "skills": cv_data.get("skills", ""),
+                "experience": cv_data.get("experience", []),
+                "education": cv_data.get("education", []),
+                "skills": cv_data.get("skills", []),
+                "projects": cv_data.get("projects", []),
+                "research": cv_data.get("research", []),
             }
-            
+
         except Exception as e:
             print(f"Error generating CV content: {e}")
-            # Return a fallback response
             return {
                 "full_name": "",
                 "email": "",
                 "phone": "",
                 "location": "",
                 "summary": f"Based on your input: {prompt[:100]}...",
-                "experience": "",
-                "education": "",
+                "experience": [],
+                "education": [],
+                "skills": [],
+                "projects": [],
+                "research": [],
             }
 
     async def generate_job_suggestions(self, cv_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:

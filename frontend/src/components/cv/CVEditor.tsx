@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import React from 'react';
 import PersonalInfoSection from './PersonalInfoSection';
 import SummarySection from './SummarySection';
 import ExperienceSection, { ExperienceEntry } from './ExperienceSection';
@@ -9,12 +8,7 @@ import EducationSection, { EducationEntry } from './EducationSection';
 import ProjectsSection, { ProjectEntry } from './ProjectsSection';
 import SkillsSection, { Skill } from './SkillsSection';
 import ResearchSection, { ResearchEntry } from './ResearchSection';
-import JobSuggestions from './JobSuggestions';
-import Card from '../ui/Card';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
 
-// Types for the CV data structure
 export interface CVEditorData {
   title: string;
   personalInfo: {
@@ -45,154 +39,92 @@ export interface CVEditorData {
 
 interface CVEditorProps {
   data: CVEditorData;
-  onChange: (data: CVEditorData) => void;
-  onAIGenerate: (prompt: string) => Promise<void>;
-  isGenerating?: boolean;
-  cvId?: string | number;
+  onChange: (update: CVEditorData | ((prev: CVEditorData) => CVEditorData)) => void;
 }
 
-export default function CVEditor({
-  data,
-  onChange,
-  onAIGenerate,
-  isGenerating = false,
-  cvId,
-}: CVEditorProps) {
-  const [aiPrompt, setAiPrompt] = useState('');
-
-  const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) return;
-    await onAIGenerate(aiPrompt);
-    setAiPrompt('');
-  };
-
+export default function CVEditor({ data, onChange }: CVEditorProps) {
   return (
     <div className="space-y-5">
-      {/* AI Assistant Card */}
-      <Card title="AI Assistant" subtitle="Use AI to generate content for your CV" variant="elevated">
-        <div className="space-y-4">
-          <textarea
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 text-slate-800 placeholder:text-slate-400"
-            rows={3}
-            placeholder="Describe your experience, skills, or what you want to include in your CV..."
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-          />
-          <Button
-            onClick={handleAIGenerate}
-            isLoading={isGenerating}
-            fullWidth
-            className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 shadow-lg"
-          >
-            <Sparkles className="h-5 w-5" />
-            <span>Generate with AI</span>
-          </Button>
-        </div>
-      </Card>
-
-      {/* Job Match Advisor */}
-      {cvId && <JobSuggestions cvId={cvId} />}
-
-      {/* CV Title */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <Input
-          label="CV Title"
-          name="title"
-          placeholder="e.g., Software Engineer Resume"
-          value={data.title}
-          onChange={(e) => onChange({ ...data, title: e.target.value })}
-          required
-        />
-      </div>
-
-      {/* Personal Info Section */}
       <PersonalInfoSection
         data={data.personalInfo}
-        onChange={(personalInfo) => onChange({ ...data, personalInfo })}
+        onChange={(personalInfo) => onChange(prev => ({ ...prev, personalInfo }))}
       />
 
-      {/* Summary Section */}
       <SummarySection
         summary={data.summary}
         sectionTitle={data.sectionTitles.summary}
-        onSummaryChange={(summary) => onChange({ ...data, summary })}
+        onSummaryChange={(summary) => onChange(prev => ({ ...prev, summary }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, summary: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, summary: title },
+          }))
         }
       />
 
-      {/* Education Section */}
       <EducationSection
         entries={data.education}
         sectionTitle={data.sectionTitles.education}
-        onEntriesChange={(education) => onChange({ ...data, education })}
+        onEntriesChange={(education) => onChange(prev => ({ ...prev, education }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, education: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, education: title },
+          }))
         }
       />
 
-      {/* Experience Section */}
       <ExperienceSection
         entries={data.experience}
         sectionTitle={data.sectionTitles.experience}
-        onEntriesChange={(experience) => onChange({ ...data, experience })}
+        onEntriesChange={(experience) => onChange(prev => ({ ...prev, experience }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, experience: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, experience: title },
+          }))
         }
       />
 
-      {/* Projects Section */}
       <ProjectsSection
         entries={data.projects}
         sectionTitle={data.sectionTitles.projects}
-        onEntriesChange={(projects) => onChange({ ...data, projects })}
+        onEntriesChange={(projects) => onChange(prev => ({ ...prev, projects }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, projects: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, projects: title },
+          }))
         }
       />
 
-      {/* Skills Section */}
       <SkillsSection
         skills={data.skills}
         sectionTitle={data.sectionTitles.skills}
-        onSkillsChange={(skills) => onChange({ ...data, skills })}
+        onSkillsChange={(skills) => onChange(prev => ({ ...prev, skills }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, skills: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, skills: title },
+          }))
         }
       />
 
-      {/* Research & Publications Section */}
       <ResearchSection
         entries={data.research}
         sectionTitle={data.sectionTitles.research}
-        onEntriesChange={(research) => onChange({ ...data, research })}
+        onEntriesChange={(research) => onChange(prev => ({ ...prev, research }))}
         onTitleChange={(title) =>
-          onChange({
-            ...data,
-            sectionTitles: { ...data.sectionTitles, research: title },
-          })
+          onChange(prev => ({
+            ...prev,
+            sectionTitles: { ...prev.sectionTitles, research: title },
+          }))
         }
       />
     </div>
   );
 }
 
-// Helper function to create empty CV data
 export function createEmptyCVData(): CVEditorData {
   return {
     title: '',
@@ -219,7 +151,6 @@ export function createEmptyCVData(): CVEditorData {
   };
 }
 
-// Helper function to convert legacy CV data to new format
 export function convertLegacyCVData(legacyData: {
   title: string;
   fullName: string;
@@ -233,7 +164,6 @@ export function convertLegacyCVData(legacyData: {
   projects?: string;
   research?: string;
 }): CVEditorData {
-  // Parse experience from text
   const experienceEntries: ExperienceEntry[] = legacyData.experience
     ? legacyData.experience.split('\n\n').filter(e => e.trim()).map((exp, idx) => {
         const lines = exp.split('\n');
@@ -251,7 +181,6 @@ export function convertLegacyCVData(legacyData: {
       })
     : [];
 
-  // Parse projects from text
   const projectEntries: ProjectEntry[] = legacyData.projects
     ? legacyData.projects.split('\n\n').filter(p => p.trim()).map((proj, idx) => {
         const lines = proj.split('\n');
@@ -269,7 +198,6 @@ export function convertLegacyCVData(legacyData: {
       })
     : [];
 
-  // Parse research from text
   const researchEntries: ResearchEntry[] = legacyData.research
     ? legacyData.research.split('\n\n').filter(r => r.trim()).map((res, idx) => {
         const lines = res.split('\n');
@@ -287,7 +215,6 @@ export function convertLegacyCVData(legacyData: {
       })
     : [];
 
-  // Parse education from text
   const educationEntries: EducationEntry[] = legacyData.education
     ? legacyData.education.split('\n\n').filter(e => e.trim()).map((edu, idx) => {
         const lines = edu.split('\n');
@@ -306,7 +233,6 @@ export function convertLegacyCVData(legacyData: {
       })
     : [];
 
-  // Parse skills from comma-separated text
   const skillsList: Skill[] = legacyData.skills
     ? legacyData.skills.split(',').filter(s => s.trim()).map((skill, idx) => ({
         id: `skill-${idx}`,
@@ -339,7 +265,6 @@ export function convertLegacyCVData(legacyData: {
   };
 }
 
-// Helper function to convert new format back to legacy format for API
 export function convertToLegacyFormat(data: CVEditorData): {
   title: string;
   full_name: string;
@@ -353,7 +278,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
   projects: string;
   research: string;
 } {
-  // Convert experience entries to text
   const experienceText = data.experience
     .filter(e => e.isVisible)
     .map(e => {
@@ -366,7 +290,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert projects to text
   const projectsText = data.projects
     .filter(p => p.isVisible)
     .map(p => {
@@ -379,7 +302,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert research to text
   const researchText = data.research
     .filter(r => r.isVisible)
     .map(r => {
@@ -393,7 +315,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert education entries to text
   const educationText = data.education
     .filter(e => e.isVisible)
     .map(e => {
@@ -407,7 +328,6 @@ export function convertToLegacyFormat(data: CVEditorData): {
     })
     .join('\n\n');
 
-  // Convert skills to comma-separated text
   const skillsText = data.skills.map(s => s.name).join(', ');
 
   return {

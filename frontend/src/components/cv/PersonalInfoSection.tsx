@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Camera, Pencil, Link as LinkIcon, Briefcase } from 'lucide-react';
+import { Mail, Phone, MapPin, Camera, Pencil, Link as LinkIcon, Briefcase, X } from 'lucide-react';
 
 interface PersonalInfo {
   fullName: string;
@@ -108,8 +108,22 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900">Edit Personal Information</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}
@@ -121,7 +135,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                 <input
                   type="text"
                   value={editData.fullName}
-                  onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditData(prev => ({ ...prev, fullName: val }));
+                  }}
                   placeholder="John Doe"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -136,7 +153,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   <input
                     type="text"
                     value={editData.professionalTitle || ''}
-                    onChange={(e) => setEditData({ ...editData, professionalTitle: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditData(prev => ({ ...prev, professionalTitle: val }));
+                    }}
                     placeholder="e.g., Product Manager, Software Engineer"
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -150,7 +170,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                 <input
                   type="email"
                   value={editData.email}
-                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditData(prev => ({ ...prev, email: val }));
+                  }}
                   placeholder="john@example.com"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -163,7 +186,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                 <input
                   type="tel"
                   value={editData.phone}
-                  onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditData(prev => ({ ...prev, phone: val }));
+                  }}
                   placeholder="+1 234 567 8900"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -176,7 +202,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                 <input
                   type="text"
                   value={editData.location}
-                  onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditData(prev => ({ ...prev, location: val }));
+                  }}
                   placeholder="City, Country"
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -191,7 +220,10 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   <input
                     type="url"
                     value={editData.linkedin || ''}
-                    onChange={(e) => setEditData({ ...editData, linkedin: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditData(prev => ({ ...prev, linkedin: val }));
+                    }}
                     placeholder="https://linkedin.com/in/username"
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
@@ -207,28 +239,15 @@ export default function PersonalInfoSection({ data, onChange }: PersonalInfoSect
                   <input
                     type="url"
                     value={editData.website || ''}
-                    onChange={(e) => setEditData({ ...editData, website: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditData(prev => ({ ...prev, website: val }));
+                    }}
                     placeholder="https://yourwebsite.com"
                     className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 flex gap-3">
-              <button
-                onClick={() => setIsEditing(false)}
-                className="flex-1 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex-1 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Save
-              </button>
             </div>
           </div>
         </div>

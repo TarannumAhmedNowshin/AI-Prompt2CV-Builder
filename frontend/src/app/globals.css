@@ -7,6 +7,13 @@
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 255, 255, 255;
   --primary-rgb: 14, 165, 233;
+
+  /* CV Template palettes */
+  --cv-modern-accent: #1e3a5f;
+  --cv-modern-accent-light: #e8eef5;
+  --cv-executive-accent: #374151;
+  --cv-executive-accent-light: #f3f4f6;
+  --cv-minimal-accent: #6b7280;
 }
 
 /* Smooth scrolling for the entire page */
@@ -122,6 +129,11 @@ body {
 .cv-print-optimized {
   font-size: 10.5pt;
   line-height: 1.5;
+}
+
+.cv-print-optimized .cv-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .cv-print-optimized h1 {

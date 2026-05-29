@@ -410,7 +410,15 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
             onClick={() => setShowSaveModal(false)}
           />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-[70] p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Save Named Version</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Save Named Version</h3>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -440,13 +448,7 @@ export default function VersionHistory({ cvId, isOpen, onClose, onRestore }: Ver
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => setShowSaveModal(false)}
-              >
-                Cancel
-              </Button>
+            <div className="flex justify-end mt-6">
               <Button
                 onClick={handleSaveNamedVersion}
                 isLoading={isSavingVersion}

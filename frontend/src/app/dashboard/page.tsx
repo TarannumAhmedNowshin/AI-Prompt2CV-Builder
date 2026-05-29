@@ -186,7 +186,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-slate-500 mb-3">{cv.full_name}</p>
                     )}
                     <div className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-primary-50 text-primary-700 border border-primary-200/50 mb-3">
-                      {cv.template}
+                      {cv.template.charAt(0).toUpperCase() + cv.template.slice(1)}
                     </div>
                     <div className="space-y-1.5 text-sm text-slate-500">
                       <div className="flex items-center">

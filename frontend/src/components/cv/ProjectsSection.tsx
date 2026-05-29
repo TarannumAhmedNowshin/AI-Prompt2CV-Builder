@@ -222,11 +222,17 @@ function ProjectEditModal({
             >
               <Trash2 className="h-5 w-5" />
             </button>
+            <button
+              onClick={() => onSave(editData)}
+              className="px-4 py-1.5 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Done
+            </button>
           </div>
         </div>
 
         {/* Modal Content */}
-        <div className="px-6 py-4 max-h-[60vh] overflow-y-auto space-y-4">
+        <div className="px-6 py-4 max-h-[65vh] overflow-y-auto space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Project Name
@@ -340,16 +346,6 @@ function ProjectEditModal({
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="px-6 py-4 border-t border-gray-200">
-          <button
-            onClick={() => onSave(editData)}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <span>✓</span> Done
-          </button>
         </div>
       </div>
     </div>

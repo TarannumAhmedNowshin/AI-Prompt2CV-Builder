@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Source_Serif_4 } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { Toaster } from 'react-hot-toast'
 import Layout from '@/components/layout/Layout'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const sourceSerif = Source_Serif_4({ subsets: ['latin'], variable: '--font-serif' })
 
 export const metadata: Metadata = {
   title: 'AI Prompt2CV Builder - Create Professional Resumes',
@@ -19,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${sourceSerif.variable} ${inter.className}`}>
         <AuthProvider>
           <Layout>
             {children}
