@@ -1,7 +1,9 @@
 import os
 import json
+import time
+import random
 from typing import Dict, Any
-from openai import AzureOpenAI
+from openai import AzureOpenAI, APIStatusError, APIConnectionError
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -81,6 +83,36 @@ class AIService:
             print(f"Error initializing Azure OpenAI client: {e}")
             raise
     
+    def _call_with_retry(self, messages: list, temperature: float = 0.4, max_retries: int = 3) -> str:
+        """Call Azure OpenAI with exponential backoff retry on transient errors."""
+        self._initialize_client()
+        base_delay = 1.0
+
+        for attempt in range(max_retries):
+            try:
+                response = self._client.chat.completions.create(
+                    model=self._deployment,
+                    messages=messages,
+                    temperature=temperature,
+                    response_format={"type": "json_object"}
+                )
+                return response.choices[0].message.content
+            except APIConnectionError as e:
+                if attempt == max_retries - 1:
+                    raise
+                delay = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+                print(f"API connection error (attempt {attempt + 1}/{max_retries}), retrying in {delay:.1f}s: {e}")
+                time.sleep(delay)
+            except APIStatusError as e:
+                if e.status_code in (429, 500, 502, 503, 504):
+                    if attempt == max_retries - 1:
+                        raise
+                    delay = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+                    print(f"API error {e.status_code} (attempt {attempt + 1}/{max_retries}), retrying in {delay:.1f}s: {e}")
+                    time.sleep(delay)
+                else:
+                    raise
+
     async def generate_cv_content(self, prompt: str) -> Dict[str, Any]:
         """
         Generate CV content from user prompt using GPT
@@ -162,17 +194,13 @@ Rules:
 - Keep the tone professional throughout."""
         
         try:
-            response = self._client.chat.completions.create(
-                model=self._deployment,
+            content = self._call_with_retry(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.4,
-                response_format={"type": "json_object"}
+                temperature=0.4
             )
-
-            content = response.choices[0].message.content
             cv_data = json.loads(content)
 
             return {
@@ -253,19 +281,15 @@ Please analyze this CV against the job description and provide detailed suggesti
 """
         
         try:
-            response = self._client.chat.completions.create(
-                model=self._deployment,
+            content = self._call_with_retry(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
-                response_format={"type": "json_object"}
+                temperature=0.7
             )
-            
-            content = response.choices[0].message.content
             suggestions = json.loads(content)
-            
+
             return {
                 "match_score": suggestions.get("match_score", 0),
                 "summary_suggestions": suggestions.get("summary_suggestions", ""),
@@ -277,7 +301,7 @@ Please analyze this CV against the job description and provide detailed suggesti
                 "strengths": suggestions.get("strengths", ""),
                 "gaps": suggestions.get("gaps", ""),
             }
-            
+
         except Exception as e:
             print(f"Error generating job suggestions: {e}")
             return {
@@ -290,6 +314,176 @@ Please analyze this CV against the job description and provide detailed suggesti
                 "overall_recommendations": ["Please try again with a more detailed job description."],
                 "strengths": "",
                 "gaps": "",
+                "error": str(e)
+            }
+
+    async def parse_document_with_ai(self, text: str) -> Dict[str, Any]:
+        """
+        Extract structured CV data from raw document text using GPT.
+        Used as a fallback when regex parsing can't extract experience/education.
+        """
+        system_prompt = """You are an expert CV/Resume parser. Extract structured information from the raw text of a resume/CV document.
+
+Return a JSON object with exactly this structure:
+{
+  "full_name": "string or empty string",
+  "email": "string or empty string",
+  "phone": "string or empty string",
+  "location": "string or empty string",
+  "summary": "professional summary if present, or empty string",
+  "experience": [
+    {
+      "job_title": "string",
+      "employer": "string",
+      "location": "string",
+      "start_date": "MM/YYYY or YYYY",
+      "end_date": "MM/YYYY or YYYY or Present",
+      "description": "bullet-point achievements, each on a new line starting with a dash"
+    }
+  ],
+  "education": [
+    {
+      "institution": "school/university name",
+      "degree": "e.g. Bachelor of Science",
+      "field_of_study": "e.g. Computer Science",
+      "start_date": "MM/YYYY or YYYY",
+      "end_date": "MM/YYYY or YYYY",
+      "gpa": "e.g. 3.8/4.0 or empty string",
+      "description": "honors, coursework, etc."
+    }
+  ],
+  "skills": [
+    {
+      "name": "skill name",
+      "category": "Programming or Web or Database or Cloud & DevOps or Data Science or Other"
+    }
+  ],
+  "projects": [
+    {
+      "title": "project name",
+      "description": "what the project does",
+      "technologies": "comma-separated technologies",
+      "link": "URL or empty string"
+    }
+  ]
+}
+
+Rules:
+- Extract ONLY information explicitly present in the text. Do not invent or hallucinate data.
+- Return empty arrays [] for sections with no data found.
+- Return empty string "" for fields not found.
+- Preserve original dates, titles, and names exactly as written.
+- For experience descriptions, use concise bullet points starting with action verbs."""
+
+        try:
+            truncated = text[:8000]
+            content = self._call_with_retry(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Extract CV information from this document text:\n\n{truncated}"}
+                ],
+                temperature=0.3
+            )
+            return json.loads(content)
+        except Exception as e:
+            print(f"Error in AI document parsing: {e}")
+            return {}
+
+    async def review_cv(self, cv_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Review a CV from a recruiter's perspective: ATS optimization,
+        achievement quantification, and tailoring quality.
+        """
+        cv_text = f"""
+Name: {cv_data.get('full_name', '')}
+Summary: {cv_data.get('summary', '')}
+Experience: {cv_data.get('experience', '')}
+Education: {cv_data.get('education', '')}
+Skills: {cv_data.get('skills', '')}
+Projects: {cv_data.get('projects', '')}
+Research: {cv_data.get('research', '')}
+"""
+
+        system_prompt = """You are a senior technical recruiter and ATS expert reviewing a CV/resume. Analyze it from three critical perspectives that determine whether a candidate gets interviews.
+
+Return a JSON object with exactly this structure:
+{
+  "overall_score": 0-100,
+  "ats_optimization": {
+    "score": 0-100,
+    "formatting_issues": ["list of formatting problems that would trip up ATS software"],
+    "missing_sections": ["standard CV sections that are missing, e.g. Summary, Skills, Education"],
+    "recommendations": ["specific actionable fixes for ATS compatibility"]
+  },
+  "achievement_quantification": {
+    "score": 0-100,
+    "weak_bullets": [
+      {
+        "original": "the vague bullet point from the CV",
+        "improved": "a rewritten version with specific numbers, metrics, and impact"
+      }
+    ],
+    "strong_bullets": ["bullet points that already use good quantification"],
+    "recommendations": ["tips for making remaining bullets more impactful"]
+  },
+  "tailoring": {
+    "score": 0-100,
+    "generic_phrases": ["overused/generic phrases found in the CV like 'team player', 'hard worker', 'responsible for'"],
+    "recommendations": ["specific suggestions to make language more unique and targeted"]
+  },
+  "summary_feedback": "2-3 sentence overall assessment of the CV's strengths and what to fix first",
+  "top_priorities": ["priority 1 - most impactful change", "priority 2", "priority 3"]
+}
+
+Rules:
+- Be specific and actionable. Don't give vague advice like "add more details".
+- For weak_bullets, rewrite each one with realistic but impressive quantified versions.
+- For ATS, focus on keyword density, section headers, formatting, and parsability.
+- For tailoring, identify clichés and generic phrases that every candidate uses.
+- The top_priorities should be the 3 changes that would most improve interview chances.
+- Score honestly: most CVs score 40-70. Only exceptional CVs score above 80.
+- If a section is empty or missing, score it low and note it as a gap."""
+
+        try:
+            content = self._call_with_retry(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Review this CV:\n{cv_text}"}
+                ],
+                temperature=0.5
+            )
+            review = json.loads(content)
+
+            return {
+                "overall_score": review.get("overall_score", 0),
+                "ats_optimization": review.get("ats_optimization", {
+                    "score": 0, "formatting_issues": [], "missing_sections": [], "recommendations": []
+                }),
+                "achievement_quantification": review.get("achievement_quantification", {
+                    "score": 0, "weak_bullets": [], "strong_bullets": [], "recommendations": []
+                }),
+                "tailoring": review.get("tailoring", {
+                    "score": 0, "generic_phrases": [], "recommendations": []
+                }),
+                "summary_feedback": review.get("summary_feedback", ""),
+                "top_priorities": review.get("top_priorities", []),
+            }
+
+        except Exception as e:
+            print(f"Error reviewing CV: {e}")
+            return {
+                "overall_score": 0,
+                "ats_optimization": {
+                    "score": 0, "formatting_issues": [], "missing_sections": [], "recommendations": []
+                },
+                "achievement_quantification": {
+                    "score": 0, "weak_bullets": [], "strong_bullets": [], "recommendations": []
+                },
+                "tailoring": {
+                    "score": 0, "generic_phrases": [], "recommendations": []
+                },
+                "summary_feedback": "Unable to review CV. Please try again.",
+                "top_priorities": ["Please try again."],
                 "error": str(e)
             }
 

@@ -10,11 +10,15 @@ import VersionHistory from '@/components/cv/VersionHistory';
 import DocumentDropzone, { ParsedCVData } from '@/components/cv/DocumentDropzone';
 import ParsedDataPreview from '@/components/cv/ParsedDataPreview';
 import JobSuggestions from '@/components/cv/JobSuggestions';
+import CVReviewer from '@/components/cv/CVReviewer';
 import TemplateSelector, { TemplateType, getTemplateComponent } from '@/components/cv/TemplateSelector';
 import { Save, Download, ArrowLeft, History, FileUp, Sparkles, PenLine, Check, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { exportToPDF, prepareCVForExport } from '@/lib/pdf-export';
 import { Skill } from '@/components/cv/SkillsSection';
+import { ExperienceEntry } from '@/components/cv/ExperienceSection';
+import { EducationEntry } from '@/components/cv/EducationSection';
+import { ProjectEntry } from '@/components/cv/ProjectsSection';
 import { mapAIResponseToCVData } from '@/lib/ai-content-mapper';
 
 type PanelMode = 'edit' | 'ai';
@@ -300,6 +304,41 @@ export default function EditCVPage() {
       name: skill.name,
     }));
 
+    const newExperience: ExperienceEntry[] = selectedData.experience.map((exp, idx) => ({
+      id: `imported-exp-${Date.now()}-${idx}`,
+      jobTitle: exp.job_title,
+      employer: exp.employer,
+      location: exp.location,
+      startDate: exp.start_date,
+      endDate: exp.end_date,
+      description: exp.description,
+      isVisible: true,
+    }));
+
+    const newEducation: EducationEntry[] = selectedData.education.map((edu, idx) => ({
+      id: `imported-edu-${Date.now()}-${idx}`,
+      school: edu.institution,
+      degree: edu.degree,
+      field: edu.field_of_study,
+      startDate: edu.start_date,
+      endDate: edu.end_date,
+      gpa: edu.gpa || '',
+      location: '',
+      description: edu.description,
+      isVisible: true,
+    }));
+
+    const newProjects: ProjectEntry[] = selectedData.projects.map((proj, idx) => ({
+      id: `imported-proj-${Date.now()}-${idx}`,
+      name: proj.title,
+      description: proj.description,
+      technologies: proj.technologies,
+      link: proj.link || '',
+      startDate: '',
+      endDate: '',
+      isVisible: true,
+    }));
+
     const updatedData: CVEditorData = {
       ...cvData,
       personalInfo: {
@@ -311,6 +350,10 @@ export default function EditCVPage() {
         website: cvData.personalInfo.website,
         photo: cvData.personalInfo.photo,
       },
+      summary: selectedData.summary || cvData.summary,
+      experience: newExperience.length > 0 ? newExperience : cvData.experience,
+      education: newEducation.length > 0 ? newEducation : cvData.education,
+      projects: newProjects.length > 0 ? newProjects : cvData.projects,
       skills: [...cvData.skills, ...newSkills.filter(
         ns => !cvData.skills.some(s => s.name.toLowerCase() === ns.name.toLowerCase())
       )],
@@ -434,7 +477,7 @@ export default function EditCVPage() {
                 )}
                 <Button onClick={handleUpdate} isLoading={isSaving}>
                   <Save className="h-4 w-4" />
-                  <span>Save</span>
+                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
                 </Button>
               </div>
             </div>
@@ -449,6 +492,9 @@ export default function EditCVPage() {
               <CVEditor data={cvData} onChange={setCvData} />
             ) : (
               <div className="space-y-5">
+                {/* CV Reviewer */}
+                {cvId && <CVReviewer cvId={cvId} />}
+
                 {/* AI Content Generator */}
                 <Card title="AI Content Generator" subtitle="Describe your background and let AI build your CV" variant="elevated">
                   <div className="space-y-4">

@@ -151,14 +151,15 @@ class DocumentParser:
         return parsed_data
 
     def _clean_text(self, text: str) -> str:
-        """Clean up extracted text"""
-        # Remove excessive whitespace
-        text = re.sub(r'\s+', ' ', text)
-        # Restore newlines for structure
-        text = re.sub(r' ?\n ?', '\n', text)
-        # Remove special characters that aren't useful
-        text = re.sub(r'[^\w\s@.+\-(),/:\'\"#&]', ' ', text)
-        return text.strip()
+        """Clean up extracted text while preserving line structure"""
+        lines = text.split('\n')
+        cleaned_lines = []
+        for line in lines:
+            line = re.sub(r'[^\w\s@.+\-(),/:\'\"#&]', ' ', line)
+            line = re.sub(r'[ \t]+', ' ', line).strip()
+            if line:
+                cleaned_lines.append(line)
+        return '\n'.join(cleaned_lines)
 
     def _extract_from_pdf(self, content: bytes) -> str:
         """Extract text from PDF"""
@@ -197,14 +198,20 @@ class DocumentParser:
             raise ImportError("Please install python-docx: pip install python-docx")
 
     def _extract_email(self) -> str:
-        """Extract email address - most reliable field"""
-        matches = re.findall(self.EMAIL_PATTERN, self.text, re.IGNORECASE)
-        if matches:
-            # Return the first valid-looking email
+        """Extract email address - prioritize emails near the top of the document"""
+        skip_domains = ['noreply', 'support', 'info@', 'example']
+
+        for line in self.lines[:15]:
+            matches = re.findall(self.EMAIL_PATTERN, line, re.IGNORECASE)
             for email in matches:
-                # Skip common non-personal emails
-                if not any(skip in email.lower() for skip in ['noreply', 'support', 'info@', 'example']):
+                if not any(skip in email.lower() for skip in skip_domains):
                     return email.lower()
+
+        matches = re.findall(self.EMAIL_PATTERN, self.text, re.IGNORECASE)
+        for email in matches:
+            if not any(skip in email.lower() for skip in skip_domains):
+                return email.lower()
+        if matches:
             return matches[0].lower()
         return ""
 
@@ -221,47 +228,46 @@ class DocumentParser:
 
     def _extract_name(self) -> str:
         """Extract full name - look at the beginning of document"""
-        # Get email domain to help identify name
         email = self._extract_email()
         email_parts = []
         if email:
             local_part = email.split('@')[0]
-            # Split by common separators in email
             email_parts = re.split(r'[._\-\d]+', local_part.lower())
             email_parts = [p for p in email_parts if len(p) > 1]
 
-        # Look at first 10 lines for a name
+        section_headers = {
+            'professional experience', 'experience', 'education', 'skills',
+            'projects', 'summary', 'objective', 'references', 'technical skills',
+            'certifications', 'certificates', 'honors', 'awards', 'research',
+            'publications', 'contact', 'about', 'profile',
+        }
+
         for line in self.lines[:10]:
-            # Skip lines that are clearly not names
             if self._is_contact_info(line):
                 continue
             if len(line) < 3 or len(line) > 50:
                 continue
-            
+            if line.lower().strip() in section_headers:
+                continue
+
             words = line.split()
-            
-            # A name is typically 2-4 words
-            if 2 <= len(words) <= 4:
-                # Check if all words look like name parts (capitalized, alphabetic)
+            if 2 <= len(words) <= 5:
                 is_name_like = all(
-                    word[0].isupper() and 
-                    word.replace('-', '').replace("'", '').isalpha() and
-                    len(word) >= 2
+                    word[0].isupper() and
+                    word.rstrip('.').replace('-', '').replace("'", '').isalpha()
                     for word in words
                 )
-                
+
                 if is_name_like:
-                    # Extra validation: check if matches email pattern
                     if email_parts:
                         line_lower = line.lower()
                         if any(part in line_lower for part in email_parts):
                             return line
                     return line
-        
-        # Fallback: try to construct from email
+
         if email_parts and len(email_parts) >= 2:
             return ' '.join(part.capitalize() for part in email_parts[:2])
-        
+
         return ""
 
     def _extract_location(self) -> str:
@@ -405,6 +411,51 @@ class DocumentParser:
         scores['overall'] = sum(scores.values()) / len(scores)
         
         return scores
+
+    async def enhance_with_ai(self, parsed_data: ParsedCVData, raw_text: str) -> ParsedCVData:
+        """
+        Fallback: use AI to extract fields that regex couldn't get.
+        Only triggers when experience AND education are both empty.
+        """
+        if parsed_data.experience or parsed_data.education:
+            return parsed_data
+
+        from .ai_service import ai_service
+
+        try:
+            ai_result = await ai_service.parse_document_with_ai(raw_text)
+        except Exception as e:
+            print(f"AI document enhancement failed: {e}")
+            return parsed_data
+
+        if not ai_result:
+            return parsed_data
+
+        if not parsed_data.full_name and ai_result.get("full_name"):
+            parsed_data.full_name = ai_result["full_name"]
+        if not parsed_data.email and ai_result.get("email"):
+            parsed_data.email = ai_result["email"]
+        if not parsed_data.phone and ai_result.get("phone"):
+            parsed_data.phone = ai_result["phone"]
+        if not parsed_data.location and ai_result.get("location"):
+            parsed_data.location = ai_result["location"]
+        if not parsed_data.summary and ai_result.get("summary"):
+            parsed_data.summary = ai_result["summary"]
+
+        parsed_data.experience = ai_result.get("experience", [])
+        parsed_data.education = ai_result.get("education", [])
+        parsed_data.projects = ai_result.get("projects", [])
+
+        if ai_result.get("skills") and not parsed_data.skills:
+            parsed_data.skills = ai_result["skills"]
+
+        parsed_data.confidence_scores["ai_enhanced"] = 1.0
+        parsed_data.confidence_scores["experience"] = 0.75 if parsed_data.experience else 0.0
+        parsed_data.confidence_scores["education"] = 0.75 if parsed_data.education else 0.0
+        parsed_data.confidence_scores["projects"] = 0.7 if parsed_data.projects else 0.0
+        parsed_data.confidence_scores["overall"] = sum(parsed_data.confidence_scores.values()) / len(parsed_data.confidence_scores)
+
+        return parsed_data
 
 
 # Singleton instance

@@ -246,3 +246,45 @@ class DocumentParseResponse(BaseModel):
     skills: list[ParsedSkillItem] = []
     projects: list[ParsedProjectItem] = []
     confidence_scores: dict[str, float] = {}
+    ai_enhanced: bool = False
+
+
+# ============ CV Review Schemas ============
+
+class WeakBulletItem(BaseModel):
+    """A vague bullet point with a suggested improvement"""
+    original: str = ""
+    improved: str = ""
+
+
+class ATSOptimization(BaseModel):
+    """ATS compatibility analysis"""
+    score: int = Field(0, ge=0, le=100)
+    formatting_issues: list[str] = []
+    missing_sections: list[str] = []
+    recommendations: list[str] = []
+
+
+class AchievementQuantification(BaseModel):
+    """Achievement quantification analysis"""
+    score: int = Field(0, ge=0, le=100)
+    weak_bullets: list[WeakBulletItem] = []
+    strong_bullets: list[str] = []
+    recommendations: list[str] = []
+
+
+class TailoringAnalysis(BaseModel):
+    """CV tailoring quality analysis"""
+    score: int = Field(0, ge=0, le=100)
+    generic_phrases: list[str] = []
+    recommendations: list[str] = []
+
+
+class CVReviewResponse(BaseModel):
+    """Full CV review response"""
+    overall_score: int = Field(0, ge=0, le=100)
+    ats_optimization: ATSOptimization = ATSOptimization()
+    achievement_quantification: AchievementQuantification = AchievementQuantification()
+    tailoring: TailoringAnalysis = TailoringAnalysis()
+    summary_feedback: str = ""
+    top_priorities: list[str] = []

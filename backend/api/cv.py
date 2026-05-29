@@ -10,11 +10,12 @@ from ..utils.auth import get_current_user
 from ..services.ai_service import ai_service
 from ..services.document_parser import document_parser
 from .cv_schemas import (
-    CVCreate, CVUpdate, CVResponse, 
+    CVCreate, CVUpdate, CVResponse,
     AIPromptRequest, AIGeneratedContent,
     JobSuggestionRequest, JobSuggestionResponse,
     CVVersionListItem, CVVersionDetail, CVVersionCreate, CVVersionRestore,
-    DocumentParseResponse
+    DocumentParseResponse,
+    CVReviewResponse
 )
 
 router = APIRouter(prefix="/api/cv", tags=["CV"])
@@ -80,9 +81,15 @@ async def parse_document(
         )
     
     try:
-        # Parse the document
+        # Parse the document with regex
         parsed_data = document_parser.parse_document(content, file.filename)
-        return DocumentParseResponse(**parsed_data.to_dict())
+
+        # AI fallback: enhance with GPT if regex couldn't extract experience/education
+        parsed_data = await document_parser.enhance_with_ai(parsed_data, document_parser.text)
+
+        result = parsed_data.to_dict()
+        result["ai_enhanced"] = parsed_data.confidence_scores.get("ai_enhanced", 0) == 1.0
+        return DocumentParseResponse(**result)
     except ImportError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -284,6 +291,47 @@ async def get_job_suggestions(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to generate suggestions: {str(e)}"
+        )
+
+
+@router.post("/{cv_id}/review", response_model=CVReviewResponse)
+async def review_cv(
+    cv_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get a recruiter-perspective review of a CV: ATS optimization,
+    achievement quantification, and tailoring analysis.
+    """
+    cv = db.query(CV).filter(
+        CV.id == cv_id,
+        CV.user_id == current_user.id
+    ).first()
+
+    if not cv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CV not found"
+        )
+
+    cv_data = {
+        "full_name": cv.full_name or "",
+        "summary": cv.summary or "",
+        "experience": cv.experience or "",
+        "education": cv.education or "",
+        "skills": cv.skills or "",
+        "projects": cv.projects or "",
+        "research": cv.research or "",
+    }
+
+    try:
+        review = await ai_service.review_cv(cv_data=cv_data)
+        return review
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to review CV: {str(e)}"
         )
 
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, AlertTriangle, User, Mail, Phone, MapPin, Wrench, Linkedin } from 'lucide-react';
+import { X, Check, AlertTriangle, User, Mail, Phone, MapPin, Wrench, Linkedin, Briefcase, GraduationCap, FolderOpen, FileText } from 'lucide-react';
 import { ParsedCVData } from './DocumentDropzone';
 import Button from '../ui/Button';
 
@@ -88,10 +88,20 @@ function FieldPreview({
 export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: ParsedDataPreviewProps) {
   // Track which fields are selected for import
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set([
-    'full_name', 'email', 'phone', 'location', 'linkedin'
+    'full_name', 'email', 'phone', 'location', 'linkedin',
+    'summary', 'experience', 'education', 'projects'
   ]));
   const [selectedSkills, setSelectedSkills] = useState<Set<number>>(
     new Set(data.skills.map((_, i) => i))
+  );
+  const [selectedExperience, setSelectedExperience] = useState<Set<number>>(
+    new Set(data.experience.map((_, i) => i))
+  );
+  const [selectedEducation, setSelectedEducation] = useState<Set<number>>(
+    new Set(data.education.map((_, i) => i))
+  );
+  const [selectedProjects, setSelectedProjects] = useState<Set<number>>(
+    new Set(data.projects.map((_, i) => i))
   );
 
   const toggleField = (field: string) => {
@@ -117,7 +127,6 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
   };
 
   const handleApply = () => {
-    // Filter data based on selections
     const filteredData: ParsedCVData = {
       ...data,
       full_name: selectedFields.has('full_name') ? data.full_name : '',
@@ -126,11 +135,17 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
       location: selectedFields.has('location') ? data.location : '',
       linkedin: selectedFields.has('linkedin') ? data.linkedin : '',
       website: '',
-      summary: '',
-      experience: [],
-      education: [],
+      summary: selectedFields.has('summary') ? data.summary : '',
+      experience: selectedFields.has('experience')
+        ? data.experience.filter((_, i) => selectedExperience.has(i))
+        : [],
+      education: selectedFields.has('education')
+        ? data.education.filter((_, i) => selectedEducation.has(i))
+        : [],
       skills: data.skills.filter((_, i) => selectedSkills.has(i)),
-      projects: [],
+      projects: selectedFields.has('projects')
+        ? data.projects.filter((_, i) => selectedProjects.has(i))
+        : [],
     };
     onApply(filteredData);
   };
@@ -146,7 +161,9 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
   if (!isOpen) return null;
 
   const overallConfidence = data.confidence_scores?.overall || 0;
-  const hasAnyData = data.full_name || data.email || data.phone || data.location || data.skills.length > 0;
+  const hasAnyData = data.full_name || data.email || data.phone || data.location ||
+    data.skills.length > 0 || data.experience.length > 0 || data.education.length > 0 ||
+    data.projects.length > 0 || data.summary;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -282,6 +299,194 @@ export default function ParsedDataPreview({ data, onApply, onCancel, isOpen }: P
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Summary */}
+              {data.summary && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Summary
+                  </h3>
+                  <div
+                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      selectedFields.has('summary')
+                        ? 'bg-primary-50 border-primary-200'
+                        : 'bg-slate-50 border-slate-200 opacity-60'
+                    }`}
+                    onClick={() => toggleField('summary')}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm text-slate-700 line-clamp-3">{data.summary}</p>
+                      <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                        selectedFields.has('summary') ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                      }`}>
+                        {selectedFields.has('summary') && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Experience */}
+              {data.experience.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Experience ({data.experience.length} found)
+                    </h3>
+                    <div
+                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                        selectedFields.has('experience') ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                      }`}
+                      onClick={() => toggleField('experience')}
+                    >
+                      {selectedFields.has('experience') && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                  </div>
+                  {selectedFields.has('experience') && (
+                    <div className="space-y-2">
+                      {data.experience.map((exp, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedExperience.has(index)
+                              ? 'bg-primary-50 border-primary-200'
+                              : 'bg-slate-50 border-slate-200 opacity-60'
+                          }`}
+                          onClick={() => {
+                            setSelectedExperience(prev => {
+                              const s = new Set(prev);
+                              s.has(index) ? s.delete(index) : s.add(index);
+                              return s;
+                            });
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">{exp.job_title}</p>
+                              <p className="text-xs text-slate-500">{exp.employer}{exp.location ? ` — ${exp.location}` : ''}</p>
+                              <p className="text-xs text-slate-400">{exp.start_date} — {exp.end_date}</p>
+                            </div>
+                            <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              selectedExperience.has(index) ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                            }`}>
+                              {selectedExperience.has(index) && <Check className="h-3 w-3 text-white" />}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Education */}
+              {data.education.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      Education ({data.education.length} found)
+                    </h3>
+                    <div
+                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                        selectedFields.has('education') ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                      }`}
+                      onClick={() => toggleField('education')}
+                    >
+                      {selectedFields.has('education') && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                  </div>
+                  {selectedFields.has('education') && (
+                    <div className="space-y-2">
+                      {data.education.map((edu, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedEducation.has(index)
+                              ? 'bg-primary-50 border-primary-200'
+                              : 'bg-slate-50 border-slate-200 opacity-60'
+                          }`}
+                          onClick={() => {
+                            setSelectedEducation(prev => {
+                              const s = new Set(prev);
+                              s.has(index) ? s.delete(index) : s.add(index);
+                              return s;
+                            });
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">{edu.degree}{edu.field_of_study ? ` in ${edu.field_of_study}` : ''}</p>
+                              <p className="text-xs text-slate-500">{edu.institution}</p>
+                              <p className="text-xs text-slate-400">{edu.start_date} — {edu.end_date}{edu.gpa ? ` | GPA: ${edu.gpa}` : ''}</p>
+                            </div>
+                            <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              selectedEducation.has(index) ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                            }`}>
+                              {selectedEducation.has(index) && <Check className="h-3 w-3 text-white" />}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Projects */}
+              {data.projects.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Projects ({data.projects.length} found)
+                    </h3>
+                    <div
+                      className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                        selectedFields.has('projects') ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                      }`}
+                      onClick={() => toggleField('projects')}
+                    >
+                      {selectedFields.has('projects') && <Check className="h-3 w-3 text-white" />}
+                    </div>
+                  </div>
+                  {selectedFields.has('projects') && (
+                    <div className="space-y-2">
+                      {data.projects.map((proj, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            selectedProjects.has(index)
+                              ? 'bg-primary-50 border-primary-200'
+                              : 'bg-slate-50 border-slate-200 opacity-60'
+                          }`}
+                          onClick={() => {
+                            setSelectedProjects(prev => {
+                              const s = new Set(prev);
+                              s.has(index) ? s.delete(index) : s.add(index);
+                              return s;
+                            });
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">{proj.title}</p>
+                              {proj.technologies && <p className="text-xs text-slate-500">{proj.technologies}</p>}
+                            </div>
+                            <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              selectedProjects.has(index) ? 'bg-primary-500 border-primary-500' : 'bg-white border-slate-300'
+                            }`}>
+                              {selectedProjects.has(index) && <Check className="h-3 w-3 text-white" />}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </>
